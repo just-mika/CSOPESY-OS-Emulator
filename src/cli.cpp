@@ -5,20 +5,6 @@
 #include <string>
 #include <sstream>
 
-//for debugging purposes only
-void printCommand(std::string command, std::string args[2]) {
-    std::cout << "++++++++++++++++++++++++++++++++\n";
-    std::cout << "Command: " << command << std::endl;
-    if (args[0] != "") {
-        std::cout << "Args: " << args[0];
-        if (args[1] != "")
-            std::cout << ", " << args[1] << std::endl;
-        else
-            std::cout << "\n";
-    }
-    std::cout << "++++++++++++++++++++++++++++++++\n";
-}
-
 
 void handleCommand(SystemState& state, std::string input) {
     std::string command;
@@ -51,4 +37,18 @@ void handleCommand(SystemState& state, std::string input) {
         std::cout << "report generated\n";
     }
     else std::cout << "Unknown command\n";
+}
+
+//for debugging purposes only
+void printCommand(std::string command, std::string args[2]) {
+    std::cout << "++++++++++++++++++++++++++++++++\n";
+    std::cout << "Command: " << command << std::endl;
+    if (args[0] != "") {
+        std::cout << "Args: " << args[0];
+        if (args[1] != "")
+            std::cout << ", " << args[1] << std::endl;
+        else
+            std::cout << "\n";
+    }
+    std::cout << "++++++++++++++++++++++++++++++++\n";
 }

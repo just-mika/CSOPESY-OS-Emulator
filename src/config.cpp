@@ -5,19 +5,6 @@
 #include <ios>
 #include <optional>
 
-//for debugging purposes only
-void printConfig(Config config) {
-	std::cout << "++++++++++++++++++++++++++++++++\n";
-	std::cout << "num-cpu: " << config.numCPU << std::endl;
-	std::cout << "scheduler: " << config.scheduler << std::endl;
-	std::cout << "quantum-cycles: " << config.quantumCycles << std::endl;
-	std::cout << "batch-process-freq: " << config.batchProcessFreq << std::endl;
-	std::cout << "min-ins: " << config.minIns << std::endl;
-	std::cout << "max-ins: " << config.maxIns << std::endl;
-	std::cout << "delay-per-exec: " << config.delaysPerExec << std::endl;
-	std::cout << "++++++++++++++++++++++++++++++++\n";
-}
-
 bool loadConfig(std::string filename, Config& config) {
 	std::ifstream file(filename);
 
@@ -57,4 +44,17 @@ bool loadConfig(std::string filename, Config& config) {
 
 	file.close();
 	return true;
+}
+
+//for debugging purposes only
+void printConfig(Config config) {
+	std::cout << "++++++++++++++++++++++++++++++++\n";
+	std::cout << "num-cpu: " << config.numCPU << std::endl;
+	std::cout << "scheduler: " << config.scheduler << std::endl;
+	std::cout << "quantum-cycles: " << config.quantumCycles << std::endl;
+	std::cout << "batch-process-freq: " << config.batchProcessFreq << std::endl;
+	std::cout << "min-ins: " << config.minIns << std::endl;
+	std::cout << "max-ins: " << config.maxIns << std::endl;
+	std::cout << "delay-per-exec: " << config.delaysPerExec << std::endl;
+	std::cout << "++++++++++++++++++++++++++++++++\n";
 }

@@ -10,7 +10,7 @@
 int main()
 {
     std::string input;
-    SystemState state;
+    SystemState state; //Current state of the system
 
     std::cout << "*==========================================*";
     std::cout << "\nCSOPESY OS Emulator\n\n";
