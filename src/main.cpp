@@ -1,5 +1,10 @@
-// main.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// main.cpp : Entry point of the CSOPESY OS Emulator.
 //
+// Description:
+//   Initializes the system state and runs the main command loop.
+//   Handles user input and delegates commands to the CLI handler.
+//
+
 #include "cli.h"
 #include "system_state.h"
 #include <iostream>

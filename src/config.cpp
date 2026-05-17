@@ -1,9 +1,15 @@
+// config.cpp : Configuration file parser and debug utilities.
+//
+// Description:
+//   Reads configuration values from file into Config structure.
+//   Also includes debugging helpers for printing configuration.
+//
+
 #include "config.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <ios>
-#include <optional>
 
 bool loadConfig(std::string filename, Config& config) {
 	std::ifstream file(filename);

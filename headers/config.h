@@ -1,3 +1,10 @@
+// config.h : Defines configuration structure and config loader interface.
+//
+// Description:
+//   Contains the Config struct and function declarations for loading
+//   and printing configuration values.
+//
+
 #pragma once
 #include <string>
 #include <cstdint>

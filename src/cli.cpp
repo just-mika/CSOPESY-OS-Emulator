@@ -1,10 +1,20 @@
+// cli.cpp : Command-line interface command parser and dispatcher.
+//
+// Description:
+//   Parses user input from the terminal and executes corresponding
+//   system commands such as initialize, scheduler control, and screen handling.
+//
+
 #include "cli.h"
 #include "system_state.h"
 #include "initializer.h"
+#include "screen.h"
+#include "scheduler.h"
+#include "report.h"
+
 #include <iostream>
 #include <string>
 #include <sstream>
-
 
 void handleCommand(SystemState& state, std::string input) {
     std::string command;
@@ -21,20 +31,18 @@ void handleCommand(SystemState& state, std::string input) {
         state.sysRunning = false;
     }
     else if (command == "screen") {
-        //placeholder
-        std::cout << "screen stuff\n";
+        screenCommand(state, args[0], args[1]);
     }
     else if (command == "scheduler-start") {
-        //placeholder
-        std::cout << "Scheduler Started\n";
+        startScheduler(state);
     }
     else if (command == "scheduler-stop") {
-        //placeholder
-        std::cout << "Scheduler Stopped\n";
+        stopScheduler(state);
     }
     else if (command == "report-util") {
         //placeholder
-        std::cout << "report generated\n";
+        if (generateReport(state))
+            std::cout << "Report generated at C:<filepath>/csopesy-log.txt!\n";
     }
     else std::cout << "Unknown command\n";
 }

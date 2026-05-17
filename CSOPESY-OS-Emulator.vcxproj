@@ -138,12 +138,14 @@
     <ClCompile Include="src\cli.cpp" />
     <ClCompile Include="src\config.cpp" />
     <ClCompile Include="src\initializer.cpp" />
+    <ClCompile Include="src\instruction.cpp" />
     <ClCompile Include="src\main.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </AdditionalIncludeDirectories>
     </ClCompile>
-    <ClCompile Include="src\process.cpp" />
+    <ClCompile Include="src\report.cpp" />
     <ClCompile Include="src\scheduler.cpp" />
+    <ClCompile Include="src\screen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\config.txt" />
@@ -152,6 +154,10 @@
     <ClInclude Include="headers\cli.h" />
     <ClInclude Include="headers\config.h" />
     <ClInclude Include="headers\initializer.h" />
+    <ClInclude Include="headers\process.h" />
+    <ClInclude Include="headers\report.h" />
+    <ClInclude Include="headers\scheduler.h" />
+    <ClInclude Include="headers\screen.h" />
     <ClInclude Include="headers\system_state.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

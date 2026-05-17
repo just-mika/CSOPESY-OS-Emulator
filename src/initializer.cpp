@@ -1,3 +1,10 @@
+// initializer.cpp : System configuration loader and initializer.
+//
+// Description:
+//   Loads configuration from file, validates values, and initializes
+//   the system state for the emulator.
+//
+
 #define CONFIG_FILE "resources/config.txt"
 
 #include "initializer.h"
