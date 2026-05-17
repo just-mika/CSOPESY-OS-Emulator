@@ -1,21 +1,21 @@
-#include "system_state.h"
-#include "scheduler.h"
-
+#include "System.h"
+#include "Scheduler.h"
 #include <iostream>
-#include <string>
 
-void startScheduler(SystemState& state) {
-	if (!state.initialized)
-		std::cout << "Config not yet initialized\n";
-	else {
-		//placeholder
-		std::cout << "Scheduler Started\n";
 
-		//put logic here
-	}
+void Scheduler::start(bool initialized) {
+	 if (!initialized)
+		 std::cout << "Config not yet initialized\n";
+	 else {
+		 //placeholder
+		 std::cout << "Scheduler Started\n";
+
+		 //put logic here
+	 }
 }
-void stopScheduler(SystemState& state) {
-	if (!state.initialized)
+
+void Scheduler::stop(bool initialized) {
+	if (!initialized)
 		std::cout << "Config not yet initialized\n";
 	else {
 		//placeholder

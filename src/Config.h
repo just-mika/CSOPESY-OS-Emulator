@@ -1,13 +1,6 @@
-// config.h : Defines configuration structure and config loader interface.
-//
-// Description:
-//   Contains the Config struct and function declarations for loading
-//   and printing configuration values.
-//
-
 #pragma once
 #include <string>
-#include <cstdint>
+
 
 struct Config {
 	int numCPU;
@@ -20,5 +13,7 @@ struct Config {
 };
 
 bool loadConfig(std::string filename, Config& config);
+
+bool validateConfig(Config config);
 
 void printConfig(Config config);

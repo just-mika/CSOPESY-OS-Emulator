@@ -1,11 +1,4 @@
-// config.cpp : Configuration file parser and debug utilities.
-//
-// Description:
-//   Reads configuration values from file into Config structure.
-//   Also includes debugging helpers for printing configuration.
-//
-
-#include "config.h"
+#include "Config.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -49,6 +42,50 @@ bool loadConfig(std::string filename, Config& config) {
 	}
 
 	file.close();
+	return true;
+}
+
+bool validateConfig(Config config) {
+	if (config.numCPU < 1 || config.numCPU > 128) {
+		std::cout << "Invalid num-cpu value\n";
+		return false;
+	}
+
+	if (config.scheduler != "\"rr\"" && config.scheduler != "\"fcfs\"") {
+		std::cout << "Invalid scheduler algorithm\n";
+		return false;
+	}
+
+	if (config.quantumCycles < 1 || config.quantumCycles > 4294967296) {
+		std::cout << "Invalid quantum-cycles value\n";
+		return false;
+	}
+
+	if (config.batchProcessFreq < 1 || config.batchProcessFreq > 4294967296) {
+		std::cout << "Invalid batch-process-freq value\n";
+		return false;
+	}
+
+	if (config.minIns < 1 || config.minIns > 4294967296) {
+		std::cout << "Invalid min-ins value\n";
+		return false;
+	}
+
+	if (config.maxIns < 1 || config.maxIns > 4294967296) {
+		std::cout << "Invalid max-ins value\n";
+		return false;
+	}
+
+	if (config.delaysPerExec < 0 || config.delaysPerExec > 4294967296) {
+		std::cout << "Invalid delay-per-exec value\n";
+		return false;
+	}
+
+	if ((config.maxIns < config.minIns)) {
+		std::cout << "min-in value is greater than max-in value\n";
+		return false;
+	}
+
 	return true;
 }
 

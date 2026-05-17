@@ -1,1 +1,0 @@
-# CSOPESY-OS-Emulator

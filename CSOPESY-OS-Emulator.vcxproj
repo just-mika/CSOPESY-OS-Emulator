@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{aaea8666-f618-4895-8c34-0bf70f89be8c}</ProjectGuid>
+    <ProjectGuid>{09317956-f956-42f9-a113-78915a37022d}</ProjectGuid>
     <RootNamespace>CSOPESYOSEmulator</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -76,9 +76,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\headers</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -93,9 +90,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\headers</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -108,9 +102,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\headers</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,9 +116,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\headers</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,30 +123,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\cli.cpp" />
-    <ClCompile Include="src\config.cpp" />
-    <ClCompile Include="src\initializer.cpp" />
-    <ClCompile Include="src\instruction.cpp" />
-    <ClCompile Include="src\main.cpp">
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      </AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="src\report.cpp" />
-    <ClCompile Include="src\scheduler.cpp" />
-    <ClCompile Include="src\screen.cpp" />
+    <ClCompile Include="src\Command.cpp" />
+    <ClCompile Include="src\Config.cpp" />
+    <ClCompile Include="src\Console.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Process.cpp" />
+    <ClCompile Include="src\Scheduler.cpp" />
+    <ClCompile Include="src\System.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Command.h" />
+    <ClInclude Include="src\Config.h" />
+    <ClInclude Include="src\Console.h" />
+    <ClInclude Include="src\Process.h" />
+    <ClInclude Include="src\Scheduler.h" />
+    <ClInclude Include="src\System.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\config.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="headers\cli.h" />
-    <ClInclude Include="headers\config.h" />
-    <ClInclude Include="headers\initializer.h" />
-    <ClInclude Include="headers\process.h" />
-    <ClInclude Include="headers\report.h" />
-    <ClInclude Include="headers\scheduler.h" />
-    <ClInclude Include="headers\screen.h" />
-    <ClInclude Include="headers\system_state.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
