@@ -28,7 +28,7 @@ int main()
     std::cout << "*==========================================*";
 
     while (state.sysRunning) {
-        std::cout << "\nroot:\\>";
+        std::cout << "\nEnter a command: ";
         getline(std::cin, input);
 
         handleCommand(state, input);

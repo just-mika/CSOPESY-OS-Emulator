@@ -43,7 +43,7 @@ void handleCommand(SystemState& state, std::string input) {
         if (generateReport(state))
             std::cout << "Report generated at C:<filepath>/csopesy-log.txt!\n";
     }
-    else std::cout << "Unknown command\n";
+    else std::cout << "Unknown command: " << input << std::endl;
 }
 
 //for debugging purposes only
