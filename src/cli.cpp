@@ -40,7 +40,6 @@ void handleCommand(SystemState& state, std::string input) {
         stopScheduler(state);
     }
     else if (command == "report-util") {
-        //placeholder
         if (generateReport(state))
             std::cout << "Report generated at C:<filepath>/csopesy-log.txt!\n";
     }
