@@ -70,6 +70,9 @@ void Console::handleCommand(const std::string& input) {
     else if (command == "exit") {
         system.shutdown();
     }
+    else if (command == "clear") {
+        std::cout << "\033[2J\033[1;1H";
+    }
     else if (command == "screen") {
         std::cout << command << " command recognized. Doing something.\n";
         //system.<method> 
