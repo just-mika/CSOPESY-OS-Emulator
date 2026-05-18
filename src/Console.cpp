@@ -9,7 +9,15 @@ Console::Console(System& system) : system(system) {}
 
 void printGroupMembers() {
     std::cout << "*==========================================*";
-    std::cout << "\nCSOPESY OS Emulator\n\n";
+       std::cout << R"(
+  _____  _____  ____  _____  ______  _______     __
+ / ____|/ ____|/ __ \|  __ \|  ____|/ ____\ \   / /
+| |    | (___ | |  | | |__) | |__  | (___  \ \_/ / 
+| |     \___ \| |  | |  ___/|  __|  \___ \  \   /  
+| |____ ____) | |__| | |    | |____ ____) |  | |   
+ \_____|_____/ \____/|_|    |______|_____/   |_|   
+                                                   
+   )" << "\n\n";
 
     std::cout << "Developed by S09 Group 7\n";
     std::cout << "Almoradie, Nicole\n";
