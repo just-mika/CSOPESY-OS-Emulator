@@ -7,8 +7,8 @@
 
 Console::Console(System& system) : system(system) {}
 
-void printGroupMembers() {
-    std::cout << "*==========================================*";
+void printHeader() {
+    std::cout << "*==================================================*";
        std::cout << R"(
   _____  _____  ____  _____  ______  _______     __
  / ____|/ ____|/ __ \|  __ \|  ____|/ ____\ \   / /
@@ -24,14 +24,14 @@ void printGroupMembers() {
     std::cout << "Amon, Mikaela\n";
     std::cout << "Filipino, Eunice\n";
     std::cout << "Wee, Justine\n";
-    std::cout << "*==========================================*";
+    std::cout << "*==================================================*";
 }
 
 
 void Console::run() {
 	std::string input;
 
-    printGroupMembers();
+    printHeader();
 
 	while (system.isRunning()) {
         std::cout << "\nEnter a command: ";
@@ -72,6 +72,7 @@ void Console::handleCommand(const std::string& input) {
     }
     else if (command == "clear") {
         std::cout << "\033[2J\033[1;1H";
+        printHeader();
     }
     else if (command == "screen") {
         std::cout << command << " command recognized. Doing something.\n";
