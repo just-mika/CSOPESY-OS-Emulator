@@ -7,10 +7,7 @@
 
 Console::Console(System& system) : system(system) {}
 
-
-void Console::run() {
-	std::string input;
-
+void printGroupMembers() {
     std::cout << "*==========================================*";
     std::cout << "\nCSOPESY OS Emulator\n\n";
 
@@ -20,6 +17,13 @@ void Console::run() {
     std::cout << "Filipino, Eunice\n";
     std::cout << "Wee, Justine\n";
     std::cout << "*==========================================*";
+}
+
+
+void Console::run() {
+	std::string input;
+
+    printGroupMembers();
 
 	while (system.isRunning()) {
         std::cout << "\nEnter a command: ";
@@ -52,26 +56,28 @@ void Console::handleCommand(const std::string& input) {
 
     //printCommand(command, args);
     if (command == "initialize") {
-        system.initialize();
+        std::cout << command << " command recognized. Doing something.\n";
+        //system.initialize();
     }
     else if (command == "exit") {
         system.shutdown();
     }
     else if (command == "screen") {
-        //placeholder
-        printCommand(command, args);
-        //idk how to implement this yet.
-        //system.<method>
+        std::cout << command << " command recognized. Doing something.\n";
+        //system.<method> 
     }
     else if (command == "scheduler-start") {
-        system.startScheduler();
+        std::cout << command << " command recognized. Doing something.\n";
+        //system.startScheduler();
     }
     else if (command == "scheduler-stop") {
-        system.stopScheduler();
+        std::cout << command << " command recognized. Doing something.\n";
+        //system.stopScheduler();
     }
     else if (command == "report-util") {
         if (system.generateReport())
-            std::cout << "Report generated at C:<filepath>/output/csopesy-log.txt!\n";
+            std::cout << command << " command recognized. Doing something.\n";
+            //std::cout << "Report generated at C:<filepath>/output/csopesy-log.txt!\n";
     }
     else std::cout << "Unknown command: " << input << std::endl;
 }
