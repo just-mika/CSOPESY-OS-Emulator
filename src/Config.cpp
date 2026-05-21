@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <ios>
+#define MAX_RANGE 4294967296
 
 bool loadConfig(std::string filename, Config& config) {
 	std::ifstream file(filename);
@@ -56,27 +57,27 @@ bool validateConfig(Config config) {
 		return false;
 	}
 
-	if (config.quantumCycles < 1 || config.quantumCycles > 4294967296) {
+	if (config.quantumCycles < 1 || config.quantumCycles > MAX_RANGE) {
 		std::cout << "Invalid quantum-cycles value\n";
 		return false;
 	}
 
-	if (config.batchProcessFreq < 1 || config.batchProcessFreq > 4294967296) {
+	if (config.batchProcessFreq < 1 || config.batchProcessFreq > MAX_RANGE) {
 		std::cout << "Invalid batch-process-freq value\n";
 		return false;
 	}
 
-	if (config.minIns < 1 || config.minIns > 4294967296) {
+	if (config.minIns < 1 || config.minIns > MAX_RANGE) {
 		std::cout << "Invalid min-ins value\n";
 		return false;
 	}
 
-	if (config.maxIns < 1 || config.maxIns > 4294967296) {
+	if (config.maxIns < 1 || config.maxIns > MAX_RANGE) {
 		std::cout << "Invalid max-ins value\n";
 		return false;
 	}
 
-	if (config.delaysPerExec < 0 || config.delaysPerExec > 4294967296) {
+	if (config.delaysPerExec < 0 || config.delaysPerExec > MAX_RANGE) {
 		std::cout << "Invalid delay-per-exec value\n";
 		return false;
 	}
