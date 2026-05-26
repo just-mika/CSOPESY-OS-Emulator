@@ -77,6 +77,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -92,6 +93,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -105,6 +107,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,6 +123,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,18 +131,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\AConsole.cpp" />
+    <ClCompile Include="src\BaseScreen.cpp" />
     <ClCompile Include="src\Command.cpp" />
     <ClCompile Include="src\Config.cpp" />
-    <ClCompile Include="src\Console.cpp" />
+    <ClCompile Include="src\ConsoleManager.cpp" />
+    <ClCompile Include="src\MainConsole.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Process.cpp" />
     <ClCompile Include="src\Scheduler.cpp" />
     <ClCompile Include="src\System.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\AConsole.h" />
+    <ClInclude Include="src\BaseScreen.h" />
     <ClInclude Include="src\Command.h" />
     <ClInclude Include="src\Config.h" />
-    <ClInclude Include="src\Console.h" />
+    <ClInclude Include="src\ConsoleManager.h" />
+    <ClInclude Include="src\MainConsole.h" />
     <ClInclude Include="src\Process.h" />
     <ClInclude Include="src\Scheduler.h" />
     <ClInclude Include="src\System.h" />
