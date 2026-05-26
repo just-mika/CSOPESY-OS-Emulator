@@ -1,14 +1,21 @@
 #include "System.h"
-#include "Console.h"
-
-#include <iostream>
+#include "ConsoleManager.h"
 
 int main()
 {
-    System system;
-    Console console(system);
+    System::initialize();
+    ConsoleManager::initialize();
 
-    console.run();
+    bool running = true;
+
+    while (running)
+    {
+        ConsoleManager::getInstance()->process();
+        //ConsoleManager::getInstance()->drawConsole();
+		
+        running = ConsoleManager::getInstance()->isRunning();
+    }
     
+    ConsoleManager::destroy();
     return 0;
 }

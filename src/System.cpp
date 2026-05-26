@@ -5,14 +5,30 @@
 
 #include <iostream>
 
-void System::initialize() {
-    if (!initialized) {
+System* System::sharedInstance = nullptr;
+System* System::getInstance()
+{
+    return sharedInstance;
+}
+
+void System::initialize()
+{
+    sharedInstance = new System();
+}
+
+void System::destroy()
+{
+    delete sharedInstance;
+}
+
+void System::initializeConfig() {
+    if (!configInitialized) {
         Config temp;
         if (loadConfig(CONFIG_FILE, temp)) {
 
             if (validateConfig(temp)) {
                 config = temp;
-                initialized = true;
+                configInitialized = true;
                 std::cout << "Config initialized\n";
 
                 //printConfig(config);
@@ -21,28 +37,22 @@ void System::initialize() {
     }
     else std::cout << "Config already initialized\n";
 };
-void System::shutdown() {
-    running = false;
-};
 
-bool System::isInitialized() {
-    return initialized;
+bool System::isConfigInitialized() {
+    return configInitialized;
 }
 
-bool System::isRunning() {
-    return running;
-};
 
 Config& System::getConfig() {
     return config;
 };
 
 void System::startScheduler() {
-    scheduler.start(initialized);
+    scheduler.start(configInitialized);
 }
 
 void System::stopScheduler() {
-    scheduler.stop(initialized);
+    scheduler.stop(configInitialized);
 }
 
 bool System::generateReport() {
@@ -50,4 +60,9 @@ bool System::generateReport() {
 
     //plalceholder
     return true;
+}
+
+System::System()
+{
+	
 }

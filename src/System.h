@@ -4,7 +4,13 @@
 
 class System {
 private:
-    bool initialized = false;
+    System();
+    ~System() = default;
+    System(System const&) {} //copy constructor is private
+    System& operator = (System const&) {} //assignment operator is private
+    static System* sharedInstance;
+
+    bool configInitialized = false;
     bool running = true;
 
     Config config;
@@ -13,11 +19,13 @@ private:
     //add more variables
 
 public:
-    void initialize();
-    void shutdown();
+	static System* getInstance();
+	static void initialize();
+	static void destroy();
 
-    bool isInitialized();
-    bool isRunning();
+    void initializeConfig();
+
+    bool isConfigInitialized();
 
     Config& getConfig();
 

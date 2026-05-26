@@ -2,14 +2,15 @@
 #include <string>
 #include <sstream>
 
-#include "Console.h"
+#include "MainConsole.h"
+
+#include "ConsoleManager.h"
 #include "System.h"
 
-Console::Console(System& system) : system(system) {}
-
-void printHeader() {
+void printHeader()
+{
     std::cout << "*==================================================*";
-       std::cout << R"(
+    std::cout << R"(
   _____  _____  ____  _____  ______  _______     __
  / ____|/ ____|/ __ \|  __ \|  ____|/ ____\ \   / /
 | |    | (___ | |  | | |__) | |__  | (___  \ \_/ / 
@@ -27,19 +28,30 @@ void printHeader() {
     std::cout << "*==================================================*";
 }
 
-
-void Console::run() {
-	std::string input;
-
+void MainConsole::display()
+{
     printHeader();
 
-	while (system.isRunning()) {
-        std::cout << "\nEnter a command: ";
-        getline(std::cin, input);
+}
 
-        handleCommand(input);
-	}
-};
+MainConsole::MainConsole()
+    : AConsole("MAIN_CONSOLE")
+{
+}
+
+void MainConsole::process()
+{
+    std::string input;
+    std::cout << "\nEnter a command: ";
+    getline(std::cin, input);
+
+    handleCommand(input);
+}
+
+void MainConsole::onEnabled()
+{
+    display();
+}
 
 //for debugging purposes only
 void printCommand(std::string command, std::string args[2]) {
@@ -55,7 +67,7 @@ void printCommand(std::string command, std::string args[2]) {
     std::cout << "++++++++++++++++++++++++++++++++\n";
 }
 
-void Console::handleCommand(const std::string& input) {
+void MainConsole::handleCommand(const std::string& input) {
     std::string command;
     std::string args[2];
     std::stringstream ss(input);
@@ -64,15 +76,15 @@ void Console::handleCommand(const std::string& input) {
 
     //printCommand(command, args);
     if (command == "initialize") {
-        std::cout << command << " command recognized. Doing something.\n";
-        //system.initialize();
+        //std::cout << command << " command recognized. Doing something.\n";
+        System::getInstance()->initializeConfig();
     }
     else if (command == "exit") {
-        system.shutdown();
+        ConsoleManager::getInstance()->exitApplication();
     }
     else if (command == "clear") {
-        std::cout << "\033[2J\033[1;1H";
-        printHeader();
+        system("cls");
+        display();
     }
     else if (command == "screen") {
         std::cout << command << " command recognized. Doing something.\n";
@@ -87,8 +99,8 @@ void Console::handleCommand(const std::string& input) {
         //system.stopScheduler();
     }
     else if (command == "report-util") {
-        if (system.generateReport())
-            std::cout << command << " command recognized. Doing something.\n";
+       // if (system.generateReport())
+    	std::cout << command << " command recognized. Doing something.\n";
             //std::cout << "Report generated at C:<filepath>/output/csopesy-log.txt!\n";
     }
     else std::cout << "Unknown command: " << input << std::endl;
