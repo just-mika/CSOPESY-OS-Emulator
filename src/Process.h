@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include "Command.h"
+#include "SymbolTable.h"
 
 enum class State
 {
@@ -22,6 +23,7 @@ class Process
 		int core = 0;                       //assigned core of process
 		int currentLine = 0;                //current instruction being executed
 		std::chrono::system_clock::time_point execDT; //date and time the process starts executing
+		SymbolTable symbolTable;            //symbol table for the process
 
 	public:
 		Process(int id, const std::string& name, const std::vector<Command>& instructions);
@@ -36,9 +38,7 @@ class Process
 		void printCurrentLine(); //prints the current instruction
 		// Attributes needed: currentLine, instructions
 		// idea: store the index/pID current instruction being run, retrieve it from list of instructions, and print it
+
+		SymbolTable* getSymbolTable();
 };
 
-/*
-int pid = 0; //example pid
-std::unordered_map<int, Process> processes; // unordered map traversal in O(N)
-Process& p1 = processes.at(pid); // retrieve process in O(1)*/
