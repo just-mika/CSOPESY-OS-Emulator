@@ -1,6 +1,6 @@
 #pragma once
 
-class Command
+class ICommand
 {
 	
 };

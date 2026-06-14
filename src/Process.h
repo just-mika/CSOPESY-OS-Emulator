@@ -3,7 +3,7 @@
 #include <vector>
 #include <chrono>
 
-#include "Command.h"
+#include "ICommand.h"
 #include "SymbolTable.h"
 
 enum class State
@@ -18,7 +18,7 @@ class Process
 	private:
 		int pID;                            //process ID
 		std::string processName;            // process_name
-		std::vector<Command> instructions;  //list of instructions
+		std::vector<ICommand> instructions;  //list of instructions
 		State state = State::READY;         //current state of process
 		int core = 0;                       //assigned core of process
 		int currentLine = 0;                //current instruction being executed
@@ -26,7 +26,7 @@ class Process
 		SymbolTable symbolTable;            //symbol table for the process
 
 	public:
-		Process(int id, const std::string& name, const std::vector<Command>& instructions);
+		Process(int id, const std::string& name, const std::vector<ICommand>& instructions);
 
 		void executeCurrentInstruction();
 		void nextInstruction();

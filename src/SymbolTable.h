@@ -25,10 +25,7 @@ public:
 
 	PrimitiveValue getVariable(const std::string& name);
 
-	bool hasVariable(const std::string& name) const
-	{
-		return table.find(name) != table.end();
-	}
+	bool hasVariable(const std::string& name) const;
 
 private:
 	std::unordered_map<std::string, Symbol> table;

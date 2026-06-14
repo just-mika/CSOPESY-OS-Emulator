@@ -1,8 +1,6 @@
 #pragma 
 #include "AConsole.h"
 
-#include "System.h"
-
 class MainConsole : public AConsole
 {
 public:
