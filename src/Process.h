@@ -2,43 +2,56 @@
 #include <string>
 #include <vector>
 #include <chrono>
-
+#include <memory>
 #include "ICommand.h"
 #include "SymbolTable.h"
 
-enum class State
-{
+enum ProcessState {
 	READY,
 	RUNNING,
+	WAITING,
 	FINISHED
+
 };
+
 
 class Process
 {
 	private:
 		int pID;                            //process ID
-		std::string processName;            // process_name
-		std::vector<ICommand> instructions;  //list of instructions
-		State state = State::READY;         //current state of process
-		int core = 0;                       //assigned core of process
-		int currentLine = 0;                //current instruction being executed
+		std::string name;            // process_name
+		std::vector<std::shared_ptr<ICommand>> commandList;  //list of instructions
+		ProcessState currentState = READY;         //current state of process
+		int cpuCoreID = -1;                       //assigned core of process
+		int commandCounter;             //current instruction being executed
 		std::chrono::system_clock::time_point execDT; //date and time the process starts executing
 		SymbolTable symbolTable;            //symbol table for the process
-
 	public:
-		Process(int id, const std::string& name, const std::vector<ICommand>& instructions);
-
-		void executeCurrentInstruction();
+		Process(int pid, std::string name);
+		void addCommand(std::shared_ptr<ICommand> command);
+		void moveToNextLine();
 		void nextInstruction();
 
-		void printProcess(); //Prints info about the process
-		// Attributes needed: processName, execDT, core 
-		// just format and print the info as is
+		// Getters
+		bool isFinished() const;
+		int getCommandCounter() const;
+		int getLinesOfCode() const;
+		int getPID() const;
+		int getCPUCoreID() const;
+		ProcessState getState() const;
+		std::string getName() const;
+		
+		void generateRandomCommands(int limit);
+		 // Generates random commands for testing purposes, up to the specified limit
 
-		void printCurrentLine(); //prints the current instruction
-		// Attributes needed: currentLine, instructions
-		// idea: store the index/pID current instruction being run, retrieve it from list of instructions, and print it
-
-		SymbolTable* getSymbolTable();
+		SymbolTable& getSymbolTable();
 };
 
+/*
+struct requirementFlags {
+	bool requireFiles;
+	int numFiles;
+	bool requireMemory;
+	int memoryRequired;
+}
+ */

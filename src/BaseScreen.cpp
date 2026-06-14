@@ -31,4 +31,13 @@ void BaseScreen::process(){
 }
 void BaseScreen::display(){}
 
-void printProcessInfo(){}
+//Prints info about the process
+// Attributes needed: processName, execDT, core 
+// just format and print the info as is
+void BaseScreen::printProcessInfo() const{}
+
+//prints the current instruction of attached process
+void BaseScreen::printCurrentLine() const
+{
+
+}

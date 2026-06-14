@@ -12,5 +12,4 @@ public:
 
 private:
     void handleCommand(const std::string& input);
-    friend class System;
 };

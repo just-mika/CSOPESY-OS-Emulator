@@ -2,8 +2,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <ios>
+#define CONFIG_FILE "resources/config.txt"
 #define MAX_RANGE 4294967296
+
+static Config globalConfig;
+static bool configInitialized = false;
 
 bool loadConfig(std::string filename, Config& config) {
 	std::ifstream file(filename);
@@ -90,15 +93,7 @@ bool validateConfig(Config config) {
 	return true;
 }
 
-//for debugging purposes only
-void printConfig(Config config) {
-	std::cout << "++++++++++++++++++++++++++++++++\n";
-	std::cout << "num-cpu: " << config.numCPU << std::endl;
-	std::cout << "scheduler: " << config.scheduler << std::endl;
-	std::cout << "quantum-cycles: " << config.quantumCycles << std::endl;
-	std::cout << "batch-process-freq: " << config.batchProcessFreq << std::endl;
-	std::cout << "min-ins: " << config.minIns << std::endl;
-	std::cout << "max-ins: " << config.maxIns << std::endl;
-	std::cout << "delay-per-exec: " << config.delaysPerExec << std::endl;
-	std::cout << "++++++++++++++++++++++++++++++++\n";
-}
+bool isConfigInitialized() { return configInitialized; }
+
+Config& getConfig() { return globalConfig; }
+

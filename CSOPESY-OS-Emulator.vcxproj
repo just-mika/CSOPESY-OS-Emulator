@@ -132,28 +132,34 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\AConsole.cpp" />
+    <ClCompile Include="src\AScheduler.cpp" />
     <ClCompile Include="src\BaseScreen.cpp" />
     <ClCompile Include="src\ICommand.cpp" />
     <ClCompile Include="src\Config.cpp" />
     <ClCompile Include="src\ConsoleManager.cpp" />
     <ClCompile Include="src\MainConsole.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\PrintCommand.cpp" />
     <ClCompile Include="src\Process.cpp" />
-    <ClCompile Include="src\Scheduler.cpp" />
+    <ClCompile Include="src\GlobalScheduler.cpp" />
+    <ClCompile Include="src\CPUWorker.cpp" />
     <ClCompile Include="src\SymbolTable.cpp" />
-    <ClCompile Include="src\System.cpp" />
+    <ClCompile Include="src\OSThread.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AConsole.h" />
+    <ClInclude Include="src\AScheduler.h" />
     <ClInclude Include="src\BaseScreen.h" />
     <ClInclude Include="src\ICommand.h" />
     <ClInclude Include="src\Config.h" />
     <ClInclude Include="src\ConsoleManager.h" />
     <ClInclude Include="src\MainConsole.h" />
+    <ClInclude Include="src\PrintCommand.h" />
     <ClInclude Include="src\Process.h" />
-    <ClInclude Include="src\Scheduler.h" />
+    <ClInclude Include="src\GlobalScheduler.h" />
+    <ClInclude Include="src\CPUWorker.h" />
     <ClInclude Include="src\SymbolTable.h" />
-    <ClInclude Include="src\System.h" />
+    <ClInclude Include="src\OSThread.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\config.txt" />

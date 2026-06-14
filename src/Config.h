@@ -17,3 +17,9 @@ bool loadConfig(std::string filename, Config& config);
 bool validateConfig(Config config);
 
 void printConfig(Config config);
+
+void initializeConfig();
+
+bool isConfigInitialized();
+
+Config& getConfig();

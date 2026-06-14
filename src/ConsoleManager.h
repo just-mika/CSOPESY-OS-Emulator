@@ -1,5 +1,4 @@
 #pragma once
-#include "System.h"
 #include <string>
 #include "AConsole.h"
 #include <unordered_map>

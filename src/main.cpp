@@ -1,9 +1,7 @@
-#include "System.h"
 #include "ConsoleManager.h"
 
 int main()
 {
-    System::initialize();
     ConsoleManager::initialize();
 
     bool running = true;
