@@ -7,7 +7,7 @@ GlobalScheduler::GlobalScheduler(Config config)
 
 void GlobalScheduler::run()
 {
-	std::cout << "thread running\n";
+	//std::cout << "thread running\n";
 }
 
 // static instance

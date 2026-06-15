@@ -26,5 +26,5 @@ AScheduler::AScheduler(Config config)
 
 void AScheduler::run()
 {
-	std::cout << "thread running\n";
+	//std::cout << "thread running\n";
 }

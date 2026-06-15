@@ -4,5 +4,5 @@
 
 void CPUWorker::run()
 {
-	std::cout << "thread running\n";
+	//std::cout << "thread running\n";
 }

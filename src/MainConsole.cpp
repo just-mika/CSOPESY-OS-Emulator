@@ -53,7 +53,7 @@ void MainConsole::handleCommand(const std::string& input) {
                 GlobalScheduler::initialize(temp);
 				std::cout << "Config initialized successfully.\n";
 
-                GlobalScheduler::getInstance()->printConfig();
+				//GlobalScheduler::getInstance()->printConfig(); uncomment to see config values after initialization
             }
         }
     }
@@ -65,9 +65,10 @@ void MainConsole::handleCommand(const std::string& input) {
         display();
     }
     else if (command == "screen") {
-        if (args[1] == "-ls")
+    	if (args[0] == "-ls")
 			std::cout << "Running processes: \n";
         //std::cout << command << " command recognized. Doing something.\n";
+		else std::cout << "Invalid arguments for " << command << " command.\n";
     }
     else if (command == "scheduler-start") {
         std::cout << command << " command recognized. Doing something.\n";
