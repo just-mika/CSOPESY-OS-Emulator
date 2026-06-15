@@ -10,8 +10,3 @@ CommandType ICommand::getCommandType()
 {
 	return commandType;
 }
-
-void ICommand::execute()
-{
-	// default no-op
-}

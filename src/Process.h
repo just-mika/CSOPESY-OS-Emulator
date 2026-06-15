@@ -41,8 +41,7 @@ class Process
 		ProcessState getState() const;
 		std::string getName() const;
 		
-		void generateRandomCommands(int limit);
-		 // Generates random commands for testing purposes, up to the specified limit
+		void initializeCommands(int limit);
 
 		SymbolTable& getSymbolTable();
 };
