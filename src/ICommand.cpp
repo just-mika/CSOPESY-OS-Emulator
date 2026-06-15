@@ -10,3 +10,8 @@ CommandType ICommand::getCommandType()
 {
 	return commandType;
 }
+
+void ICommand::execute()
+{
+	
+}
