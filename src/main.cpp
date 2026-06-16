@@ -1,4 +1,5 @@
 #include "ConsoleManager.h"
+#include "GlobalScheduler.h"
 
 int main()
 {
@@ -13,7 +14,9 @@ int main()
 		
         running = ConsoleManager::getInstance()->isRunning();
     }
-    
+
+    if (GlobalScheduler::getInstance() != nullptr)
+        GlobalScheduler::getInstance()->destroy();
     ConsoleManager::destroy();
     return 0;
 }

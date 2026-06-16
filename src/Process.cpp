@@ -8,17 +8,30 @@ Process::Process(int pid, std::string name)
 
 void Process::addCommand(std::shared_ptr<ICommand> command)
 {
-	
 }
 
 void Process::moveToNextLine()
 {
-	
 }
 
 void Process::nextInstruction()
 {
-	
+
+}
+
+int Process::getCommandCounter() const
+{
+    return commandCounter;
+}
+
+int Process::getLinesOfCode() const
+{
+    return commandList.size();
+}
+
+int Process::getCPUCoreID() const
+{
+    return cpuCoreID;
 }
 
 bool Process::isFinished() const

@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>17.0</VCProjectVersion>
+    <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{09317956-f956-42f9-a113-78915a37022d}</ProjectGuid>
+    <ProjectGuid>{aaf267a2-f09b-4ffc-b066-aad743baa0af}</ProjectGuid>
     <RootNamespace>CSOPESYOSEmulator</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -77,12 +77,14 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -93,12 +95,14 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -107,12 +111,14 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -123,46 +129,49 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\AConsole.cpp" />
     <ClCompile Include="src\AScheduler.cpp" />
     <ClCompile Include="src\BaseScreen.cpp" />
-    <ClCompile Include="src\ICommand.cpp" />
+    <ClCompile Include="src\Command.cpp" />
     <ClCompile Include="src\Config.cpp" />
     <ClCompile Include="src\ConsoleManager.cpp" />
-    <ClCompile Include="src\MainConsole.cpp" />
+    <ClCompile Include="src\CPUWorker.cpp" />
+    <ClCompile Include="src\GlobalScheduler.cpp" />
+    <ClCompile Include="src\ICommand.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\MainConsole.cpp" />
+    <ClCompile Include="src\OSThread.cpp" />
     <ClCompile Include="src\PrintCommand.cpp" />
     <ClCompile Include="src\Process.cpp" />
-    <ClCompile Include="src\GlobalScheduler.cpp" />
-    <ClCompile Include="src\CPUWorker.cpp" />
     <ClCompile Include="src\SymbolTable.cpp" />
-    <ClCompile Include="src\OSThread.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="resources\config.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AConsole.h" />
     <ClInclude Include="src\AScheduler.h" />
     <ClInclude Include="src\BaseScreen.h" />
-    <ClInclude Include="src\ICommand.h" />
     <ClInclude Include="src\Config.h" />
     <ClInclude Include="src\ConsoleManager.h" />
+    <ClInclude Include="src\CPUWorker.h" />
+    <ClInclude Include="src\GlobalScheduler.h" />
+    <ClInclude Include="src\ICommand.h" />
     <ClInclude Include="src\MainConsole.h" />
+    <ClInclude Include="src\OSThread.h" />
     <ClInclude Include="src\PrintCommand.h" />
     <ClInclude Include="src\Process.h" />
-    <ClInclude Include="src\GlobalScheduler.h" />
-    <ClInclude Include="src\CPUWorker.h" />
     <ClInclude Include="src\SymbolTable.h" />
-    <ClInclude Include="src\OSThread.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="resources\config.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

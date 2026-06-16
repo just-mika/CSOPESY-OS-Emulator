@@ -1,12 +1,21 @@
 ﻿#pragma once
+#include <memory>
 #include "OSThread.h"
+#include "Process.h"
 
 class CPUWorker : public OSThread
 {
-private:
 public:
-	void update(bool isRunning);
+    CPUWorker(int coreID);
 
-	void run() override;
+    void assignProcess(std::shared_ptr<Process> process);
+    std::shared_ptr<Process> getCurrentProcess() const;
+    bool isFree() const;
+    void update(bool isRunning);
+    void run() override;
 
-}; 
+private:
+    int coreID;
+    bool running = false;
+    std::shared_ptr<Process> currentProcess = nullptr;
+};

@@ -8,8 +8,7 @@ OSThread::~OSThread() {}
 
 void OSThread::start()
 {
-	//uncomment once AScheduler and CPUWorker are implemented
-    //std::thread(&OSThread::run, this).detach();
+	std::thread(&OSThread::run, this).detach();
 }
 
 void OSThread::sleep(int ms)

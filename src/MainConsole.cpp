@@ -43,17 +43,15 @@ void MainConsole::handleCommand(const std::string& input) {
     ss >> command >> args[0] >> args[1];
 
     //printCommand(command, args);
-    if (command == "initialize") { 
+    if (command == "initialize") {
         if (GlobalScheduler::getInstance() != nullptr) {
-            std::cout << "Config lready initialized.\n";
+            std::cout << "Already initialized.\n";
         }
         else {
             Config temp;
             if (loadConfig(CONFIG_FILE, temp) && validateConfig(temp)) {
                 GlobalScheduler::initialize(temp);
-				std::cout << "Config initialized successfully.\n";
-
-				//GlobalScheduler::getInstance()->printConfig(); uncomment to see config values after initialization
+                std::cout << "Config initialized successfully.\n";
             }
         }
     }
@@ -71,7 +69,13 @@ void MainConsole::handleCommand(const std::string& input) {
 		else std::cout << "Invalid arguments for " << command << " command.\n";
     }
     else if (command == "scheduler-start") {
-        std::cout << command << " command recognized. Doing something.\n";
+        if (GlobalScheduler::getInstance() == nullptr) {
+            std::cout << "Config not initialized yet.\n";
+        }
+        else {
+            GlobalScheduler::getInstance()->init();
+            std::cout << "Scheduler started.\n";
+        }
     }
     else if (command == "scheduler-stop") {
         std::cout << command << " command recognized. Doing something.\n";
