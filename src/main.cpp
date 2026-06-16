@@ -6,17 +6,19 @@ int main()
     ConsoleManager::initialize();
 
     bool running = true;
+    int cpuCycles = 0;
 
     while (running)
     {
         ConsoleManager::getInstance()->process();
-        //ConsoleManager::getInstance()->drawConsole();
-		
+
+        cpuCycles++;
         running = ConsoleManager::getInstance()->isRunning();
     }
 
     if (GlobalScheduler::getInstance() != nullptr)
-        GlobalScheduler::getInstance()->destroy();
+        GlobalScheduler::destroy();
     ConsoleManager::destroy();
+
     return 0;
 }
