@@ -142,7 +142,6 @@
     <ClCompile Include="src\AConsole.cpp" />
     <ClCompile Include="src\AScheduler.cpp" />
     <ClCompile Include="src\BaseScreen.cpp" />
-    <ClCompile Include="src\Command.cpp" />
     <ClCompile Include="src\Config.cpp" />
     <ClCompile Include="src\ConsoleManager.cpp" />
     <ClCompile Include="src\CPUWorker.cpp" />
