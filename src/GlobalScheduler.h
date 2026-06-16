@@ -2,7 +2,7 @@
 #include <random>
 #include <string>
 #include <memory>
-
+#include "CPUWorker.h"
 #include "AScheduler.h"
 
 class GlobalScheduler : public AScheduler {
@@ -18,7 +18,7 @@ public:
 
     void run() override;
     void stop();
-    bool generateReport();
+    //bool generateReport();
     void printConfig();
     bool isInitialized();
 
@@ -27,4 +27,5 @@ private:
     ~GlobalScheduler() = default;
     GlobalScheduler& operator=(GlobalScheduler const&) {}
     static GlobalScheduler* sharedInstance;
+    std::vector<std::shared_ptr<CPUWorker>> workers;
 };

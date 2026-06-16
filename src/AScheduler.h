@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <string>
 #include <memory>
+#include <deque>
 
 #include "Process.h"
 #include "OSThread.h"
@@ -23,8 +24,8 @@ public:
     std::shared_ptr<Process> findProcess(std::string processName);
     void run() override;
     void stop();
-
     virtual void init() = 0;
+    static SchedulingAlgorithm parseAlgorithm(std::string algo);
 
 protected:
     SchedulingAlgorithm algo;
@@ -34,4 +35,9 @@ protected:
     unsigned long long minIns;
     unsigned long long maxIns;
     unsigned long long delaysPerExec;
+
+    bool running = false;
+    std::deque<std::shared_ptr<Process>> readyQueue;
+    std::deque<std::shared_ptr<Process>> finishedProcesses;
+    std::deque<std::shared_ptr<Process>> runningProcesses;
 };
