@@ -11,6 +11,9 @@ CPUWorker::CPUWorker(int coreID)
 
 void CPUWorker::assignProcess(std::shared_ptr<Process> process) {
     currentProcess = process;
+    if (currentProcess != nullptr) {
+		currentProcess->setCPUCoreID(this->coreID); // Assign the core ID to the process
+    }
 }
 
 std::shared_ptr<Process> CPUWorker::getCurrentProcess() const {
@@ -28,11 +31,8 @@ void CPUWorker::update(bool isRunning) {
 void CPUWorker::run() {
     std::cout << "CPUWorker " << coreID << " thread started\n";
     while (running) {
-        if (currentProcess != nullptr) {
+        if (currentProcess != nullptr && !currentProcess->isFinished()) {
             currentProcess->nextInstruction();
-            if (currentProcess->isFinished()) {
-                currentProcess = nullptr;
-            }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

@@ -23,8 +23,19 @@ void GlobalScheduler::run()
 	{
 		for (auto& worker : workers) {
 			if (!worker->isFree() && worker->getCurrentProcess()->isFinished()) {
-				finishedProcesses.push_back(worker->getCurrentProcess());
-				worker->assignProcess(nullptr); // free the worker
+
+				auto finishedProc = worker->getCurrentProcess();
+
+				// Add to finished list
+				finishedProcesses.push_back(finishedProc);
+
+				// Remove from running list
+				auto it = std::find(runningProcesses.begin(), runningProcesses.end(), finishedProc);
+				if (it != runningProcesses.end()) {
+					runningProcesses.erase(it);
+				}
+
+				worker->assignProcess(nullptr); // Free the worker
 			}
 		}
 
@@ -36,7 +47,6 @@ void GlobalScheduler::run()
 				worker->assignProcess(process);
 			}
 		}
-
 		OSThread::sleep(100);
 	}
 }
@@ -62,6 +72,19 @@ void GlobalScheduler::init()
 	this->start(); // start scheduler thread
 
 	// create 10 dummy processes
+	for (int i = 1; i <= 10; ++i) {
+		std::string processName = "screen_";
+		if (i < 10) processName += "0";
+		processName += std::to_string(i);
+
+		std::shared_ptr<Process> newProcess = std::make_shared<Process>(i, processName);
+
+		// Load the 100 commands into this process
+		newProcess->initializeCommands(100);
+
+		// Add to the Ready Queue
+		this->addProcess(newProcess);
+	}
 }
 
 void GlobalScheduler::destroy()

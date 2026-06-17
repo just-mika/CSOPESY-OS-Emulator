@@ -1,6 +1,8 @@
 #include "Process.h"
+#include "PrintCommand.h"
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 
 Process::Process(int pid, std::string name)
 {
@@ -9,10 +11,27 @@ Process::Process(int pid, std::string name)
 	this->commandCounter = 0;
 	this->currentState = READY;
 	this->cpuCoreID = -1; // has not been assigned to a core yet
-  this->creationTime = std::time(nullptr);
+	this->creationTime = std::time(nullptr);
 }
 
-std::string Process::getFormattedCreationTime() const 
+void Process::initializeCommands(int limit)
+{
+	std::string fileName = this->name + ".txt";
+	std::ofstream outFile(fileName, std::ios::out);
+	if (outFile.is_open()) {
+		outFile << "Process name: " << this->name << "\n";
+		outFile << "Logs:\n\n";
+		outFile.close();
+	}
+
+	for (int i = 1; i <= limit; ++i) {
+		std::string printText = "Hello world from " + this->name + "!";
+		std::shared_ptr<ICommand> printCmd = std::make_shared<PrintCommand>(this->pID, this->name, printText); // Pass the process
+		this->addCommand(printCmd); // Add the command to the process's command list
+	}
+}
+
+std::string Process::getFormattedCreationTime() const
 {
     std::tm tm_struct;
     
@@ -55,6 +74,11 @@ void Process::nextInstruction()
 		currentState = RUNNING;
 	}
 	if (commandCounter < static_cast<int>(commandList.size())) {
+		std::shared_ptr<PrintCommand> printCmd = std::dynamic_pointer_cast<PrintCommand>(commandList[commandCounter]); // Current command being executed
+		if (printCmd) {
+			printCmd->setCoreID(this->cpuCoreID);
+		}
+
 		commandList[commandCounter]->execute();
 		moveToNextLine();
 	}
@@ -98,4 +122,9 @@ std::string Process::getName() const
 SymbolTable& Process::getSymbolTable()
 {
 	return symbolTable;
+}
+
+void Process::setCPUCoreID(int coreID)
+{
+	this->cpuCoreID = coreID;
 }

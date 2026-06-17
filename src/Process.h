@@ -34,6 +34,7 @@ class Process
 		void addCommand(std::shared_ptr<ICommand> command);
 		void moveToNextLine();
 		void nextInstruction();
+		void initializeCommands(int limit);
 
 		// Getters
 		bool isFinished() const;
@@ -43,13 +44,11 @@ class Process
 		int getCPUCoreID() const;
 		ProcessState getState() const;
 		std::string getName() const;
-		
-		void initializeCommands(int limit);
 		std::string getFormattedCreationTime() const;
-		
-
-
 		SymbolTable& getSymbolTable();
+
+		// Setters
+		void setCPUCoreID(int coreID);
 };
 
 /*
