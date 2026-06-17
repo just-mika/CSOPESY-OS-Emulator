@@ -5,6 +5,7 @@
 #include <memory>
 #include "ICommand.h"
 #include "SymbolTable.h"
+#include <ctime>
 
 enum ProcessState {
 	READY,
@@ -26,6 +27,8 @@ class Process
 		int commandCounter;             //current instruction being executed
 		std::chrono::system_clock::time_point execDT; //date and time the process starts executing
 		SymbolTable symbolTable;            //symbol table for the process
+		std::time_t creationTime; 
+
 	public:
 		Process(int pid, std::string name);
 		void addCommand(std::shared_ptr<ICommand> command);
@@ -42,6 +45,9 @@ class Process
 		std::string getName() const;
 		
 		void initializeCommands(int limit);
+		std::string getFormattedCreationTime() const;
+		
+
 
 		SymbolTable& getSymbolTable();
 };
@@ -54,3 +60,4 @@ struct requirementFlags {
 	int memoryRequired;
 }
  */
+

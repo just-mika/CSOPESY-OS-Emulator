@@ -63,10 +63,21 @@ void MainConsole::handleCommand(const std::string& input) {
         display();
     }
     else if (command == "screen") {
-    	if (args[0] == "-ls")
-			std::cout << "Running processes: \n";
-        //std::cout << command << " command recognized. Doing something.\n";
-		else std::cout << "Invalid arguments for " << command << " command.\n";
+        if (args[0] == "-ls") 
+        {
+            if (GlobalScheduler::getInstance() != nullptr) 
+            {
+                GlobalScheduler::getInstance()->displayScreenLS();
+            } 
+            else 
+            {
+                std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
+            }
+        }
+        else 
+        {
+            std::cout << "Invalid arguments for " << command << " command.\n";
+        }
     }
     else if (command == "scheduler-start") {
         if (GlobalScheduler::getInstance() == nullptr) {

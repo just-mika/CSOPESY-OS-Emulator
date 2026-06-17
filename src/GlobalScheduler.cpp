@@ -1,5 +1,6 @@
 #include "GlobalScheduler.h"
 #include <iostream>
+#include <iomanip> // for std::setw and std::left
 
 #include "CPUWorker.h"
 
@@ -88,4 +89,38 @@ void GlobalScheduler::printConfig() {
 	std::cout << "max-ins: " << maxIns << std::endl;
 	std::cout << "delay-per-exec: " << delaysPerExec << std::endl;
 	std::cout << "++++++++++++++++++++++++++++++++\n";
+}
+
+
+void GlobalScheduler::displayScreenLS() const 
+{
+    std::cout << "--------------------------------------------------\n";
+    std::cout << "Running processes:\n";
+    
+    // Loop through CPU workers to find actively executing processes
+    for (const auto& worker : workers) 
+    {
+        if (!worker->isFree()) 
+        {
+            auto p = worker->getCurrentProcess();
+            if (p != nullptr) 
+            {
+				//Reference: https://en.cppreference.com/cpp/io/manip/left
+                std::cout << std::left << std::setw(15) << p->getName()
+                          << "(" << p->getFormattedCreationTime() << ")    "
+                          << "Core: " << std::setw(5) << p->getCPUCoreID() 
+                          << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
+            }
+        }
+    }
+
+    std::cout << "\nFinished processes:\n";
+    for (const auto& p : finishedProcesses) 
+    {
+        std::cout << std::left << std::setw(15) << p->getName()
+                  << "(" << p->getFormattedCreationTime() << ")    "
+                  << std::setw(12) << "Finished"
+                  << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
+    }
+    std::cout << "--------------------------------------------------\n";
 }
