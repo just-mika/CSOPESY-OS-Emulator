@@ -18,7 +18,7 @@ GlobalScheduler::GlobalScheduler(Config config)
 void GlobalScheduler::run()
 {
 	running = true;
-	std::cout << "GlobalScheduler thread started\n";
+	//std::cout << "GlobalScheduler thread started\n";
 	while (running)
 	{
 		for (auto& worker : workers) {

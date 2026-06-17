@@ -29,7 +29,7 @@ void CPUWorker::update(bool isRunning) {
 }
 
 void CPUWorker::run() {
-    std::cout << "CPUWorker " << coreID << " thread started\n";
+    //std::cout << "CPUWorker " << coreID << " thread started\n";
     while (running) {
         if (currentProcess != nullptr && !currentProcess->isFinished()) {
             currentProcess->nextInstruction();
