@@ -21,11 +21,12 @@ public:
     //bool generateReport();
     void printConfig();
     bool isInitialized();
+    void displayScreenLS() const;
 
 private:
     GlobalScheduler(Config config);
     ~GlobalScheduler() = default;
-    GlobalScheduler& operator=(GlobalScheduler const&) {}
+    GlobalScheduler& operator=(GlobalScheduler const&) { }
     static GlobalScheduler* sharedInstance;
     std::vector<std::shared_ptr<CPUWorker>> workers;
 };
