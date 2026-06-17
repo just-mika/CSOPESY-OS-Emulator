@@ -120,11 +120,13 @@ void GlobalScheduler::displayScreenLS() const
     std::cout << "--------------------------------------------------\n";
     std::cout << "Running processes:\n";
     
+	bool noRunningProcesses = true;
     // Loop through CPU workers to find actively executing processes
     for (const auto& worker : workers) 
     {
         if (!worker->isFree()) 
         {
+			noRunningProcesses = false;
             auto p = worker->getCurrentProcess();
             if (p != nullptr) 
             {
@@ -137,13 +139,18 @@ void GlobalScheduler::displayScreenLS() const
         }
     }
 
+	if (noRunningProcesses) std::cout << "No running processes\n";
+
     std::cout << "\nFinished processes:\n";
-    for (const auto& p : finishedProcesses) 
-    {
-        std::cout << std::left << std::setw(15) << p->getName()
-                  << "(" << p->getFormattedCreationTime() << ")    "
-                  << std::setw(12) << "Finished"
-                  << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
-    }
+	if (!finishedProcesses.empty()) {
+		for (const auto& p : finishedProcesses)
+		{
+			std::cout << std::left << std::setw(15) << p->getName()
+				<< "(" << p->getFormattedCreationTime() << ")    "
+				<< std::setw(12) << "Finished"
+				<< p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
+		}
+	}
+	else std::cout << "No finished processes\n";
     std::cout << "--------------------------------------------------\n";
 }
