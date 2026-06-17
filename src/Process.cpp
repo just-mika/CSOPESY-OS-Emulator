@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <sstream>
 #include <fstream>
+#include "OSThread.h"
 
 Process::Process(int pid, std::string name)
 {
@@ -28,6 +29,7 @@ void Process::initializeCommands(int limit)
 		std::string printText = "Hello world from " + this->name + "!";
 		std::shared_ptr<ICommand> printCmd = std::make_shared<PrintCommand>(this->pID, this->name, printText); // Pass the process
 		this->addCommand(printCmd); // Add the command to the process's command list
+		OSThread::sleep(1);
 	}
 }
 
