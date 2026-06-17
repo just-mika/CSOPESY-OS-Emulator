@@ -4,10 +4,12 @@
 
 Process::Process(int pid, std::string name)
 {
-    this->pID = pid;
-    this->name = name;
-    
-    this->creationTime = std::time(nullptr);
+	this->pID = pid;
+	this->name = name;
+	this->commandCounter = 0;
+	this->currentState = READY;
+	this->cpuCoreID = -1; // has not been assigned to a core yet
+  this->creationTime = std::time(nullptr);
 }
 
 std::string Process::getFormattedCreationTime() const 
@@ -30,15 +32,32 @@ std::string Process::getFormattedCreationTime() const
 
 void Process::addCommand(std::shared_ptr<ICommand> command)
 {
+	if (command != nullptr) {
+		commandList.push_back(command);
+	}
 }
 
 void Process::moveToNextLine()
 {
+	commandCounter++;
+	if (commandCounter >= static_cast<int>(commandList.size())) {
+		currentState = FINISHED;
+	}
 }
 
 void Process::nextInstruction()
 {
-
+	if (isFinished() || commandList.empty()) {
+		return;
+	}
+	if (commandCounter == 0) {
+		execDT = std::chrono::system_clock::now();
+		currentState = RUNNING;
+	}
+	if (commandCounter < static_cast<int>(commandList.size())) {
+		commandList[commandCounter]->execute();
+		moveToNextLine();
+	}
 }
 
 int Process::getCommandCounter() const
@@ -58,9 +77,7 @@ int Process::getCPUCoreID() const
 
 bool Process::isFinished() const
 { 
-	if (currentState == FINISHED)
-		return true;
-	return false;
+	return currentState == FINISHED;
 }
 
 int Process::getPID() const
