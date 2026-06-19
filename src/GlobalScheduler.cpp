@@ -26,6 +26,7 @@ void GlobalScheduler::run()
 
 				auto finishedProc = worker->getCurrentProcess();
 
+				std::unique_lock lock(mutex);
 				// Add to finished list
 				finishedProcesses.push_back(finishedProc);
 
@@ -34,7 +35,7 @@ void GlobalScheduler::run()
 				if (it != runningProcesses.end()) {
 					runningProcesses.erase(it);
 				}
-
+				lock.unlock();
 				worker->assignProcess(nullptr); // Free the worker
 			}
 		}
@@ -47,7 +48,7 @@ void GlobalScheduler::run()
 				worker->assignProcess(process);
 			}
 		}
-		OSThread::sleep(100);
+		this->sleep(100);
 	}
 }
 
@@ -65,6 +66,7 @@ void GlobalScheduler::initialize(Config config) {
 void GlobalScheduler::init()
 {
 	// start workers
+
 	for (auto& worker : workers) {
 		worker->update(true);
 		worker->start();
@@ -72,7 +74,7 @@ void GlobalScheduler::init()
 	this->start(); // start scheduler thread
 
 	// create 10 dummy processes
-	for (int i = 1; i <= 10; ++i) {
+	for (int i = 1; i <= batchProcessFreq; ++i) {
 		std::string processName = "screen_";
 		if (i < 10) processName += "0";
 		processName += std::to_string(i);
@@ -80,10 +82,11 @@ void GlobalScheduler::init()
 		std::shared_ptr<Process> newProcess = std::make_shared<Process>(i, processName);
 
 		// Load the 100 commands into this process
-		newProcess->initializeCommands(100);
+		newProcess->initializeCommands(minIns);
 
 		// Add to the Ready Queue
 		this->addProcess(newProcess);
+		std::cout << "Process " << i << " created with " << minIns << " instructions \n";
 	}
 }
 

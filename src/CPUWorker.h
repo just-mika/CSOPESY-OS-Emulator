@@ -1,5 +1,7 @@
 ﻿#pragma once
 #include <memory>
+#include <mutex>
+
 #include "OSThread.h"
 #include "Process.h"
 
@@ -16,6 +18,7 @@ public:
 
 private:
     int coreID;
-    bool running = false;
+    std::atomic<bool> running = false;
     std::shared_ptr<Process> currentProcess = nullptr;
+    mutable std::mutex mutex;
 };

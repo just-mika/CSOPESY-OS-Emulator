@@ -2,6 +2,7 @@
 #include <string>
 #include <memory>
 #include <deque>
+#include <shared_mutex>
 
 #include "Process.h"
 #include "OSThread.h"
@@ -21,7 +22,7 @@ public:
     AScheduler(Config config);
 
     void addProcess(std::shared_ptr<Process> process);
-    std::shared_ptr<Process> findProcess(std::string processName);
+    std::shared_ptr<Process> findProcess(const std::string& processName);
     void run() override;
     void stop();
     virtual void init() = 0;
@@ -36,7 +37,9 @@ protected:
     unsigned long long maxIns;
     unsigned long long delaysPerExec;
 
-    bool running = false;
+    mutable std::shared_mutex mutex;
+
+    std::atomic<bool> running = false;
     std::deque<std::shared_ptr<Process>> readyQueue;
     std::deque<std::shared_ptr<Process>> finishedProcesses;
     std::deque<std::shared_ptr<Process>> runningProcesses;
