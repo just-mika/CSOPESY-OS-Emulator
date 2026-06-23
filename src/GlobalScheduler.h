@@ -14,6 +14,7 @@ public:
     void init() override;
     std::shared_ptr<Process> createUniqueProcess(std::string name);
     std::shared_ptr<Process> findProcess(std::string name) const;
+    std::vector<std::shared_ptr<CPUWorker>> getWorkers();
     void tick();
 
     void run() override;
@@ -21,7 +22,6 @@ public:
     //bool generateReport();
     void printConfig();
     bool isInitialized();
-    void displayScreenLS() const;
 
 private:
     GlobalScheduler(Config config);

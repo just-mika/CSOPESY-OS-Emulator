@@ -67,7 +67,7 @@ void MainConsole::handleCommand(const std::string& input) {
         {
             if (GlobalScheduler::getInstance() != nullptr) 
             {
-                GlobalScheduler::getInstance()->displayScreenLS();
+                displayScreenLS();
             } 
             else 
             {
@@ -132,4 +132,41 @@ void printHeader()
     std::cout << "Filipino, Eunice\n";
     std::cout << "Wee, Justine\n";
     std::cout << "*==================================================*";
+}
+
+void MainConsole::displayScreenLS() const
+{
+    std::cout << "--------------------------------------------------\n";
+    std::cout << "Running processes:\n";
+
+    typedef std::deque<std::shared_ptr<Process>> Queue;
+    // Loop through CPU workers to find actively executing processes
+
+    Queue runningProcesses = GlobalScheduler::getInstance()->getRunningProcesses();
+
+    if (!runningProcesses.empty())
+    {
+        for (const auto& p : runningProcesses){
+            //Reference: https://en.cppreference.com/cpp/io/manip/left
+            std::cout << std::left << std::setw(15) << p->getName()
+                << "(" << p->getFormattedCreationTime() << ")    "
+                << "Core: " << std::setw(5) << p->getCPUCoreID()
+                << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
+        }
+    }
+	else std::cout << "No running processes\n";
+
+    Queue finishedProcesses = GlobalScheduler::getInstance()->getFinishedProcesses();
+    std::cout << "\nFinished processes:\n";
+    if (!finishedProcesses.empty()) {
+        for (const auto& p : finishedProcesses)
+        {
+            std::cout << std::left << std::setw(15) << p->getName()
+                << "(" << p->getFormattedCreationTime() << ")    "
+                << std::setw(12) << "Finished"
+                << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
+        }
+    }
+    else std::cout << "No finished processes\n";
+    std::cout << "--------------------------------------------------\n";
 }

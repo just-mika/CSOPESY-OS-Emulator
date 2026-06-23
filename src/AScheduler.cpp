@@ -54,3 +54,13 @@ SchedulingAlgorithm AScheduler::parseAlgorithm(std::string algo) {
         return RR;
     return FCFS;
 }
+
+std::deque<std::shared_ptr<Process>> AScheduler::getFinishedProcesses()
+{
+    return finishedProcesses;
+}
+
+std::deque<std::shared_ptr<Process>> AScheduler::getRunningProcesses()
+{
+    return runningProcesses;
+}

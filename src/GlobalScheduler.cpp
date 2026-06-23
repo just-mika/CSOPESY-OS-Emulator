@@ -18,7 +18,6 @@ GlobalScheduler::GlobalScheduler(Config config)
 void GlobalScheduler::run()
 {
 	running = true;
-	//std::cout << "GlobalScheduler thread started\n";
 	while (running)
 	{
 		for (auto& worker : workers) {
@@ -86,7 +85,7 @@ void GlobalScheduler::init()
 
 		// Add to the Ready Queue
 		this->addProcess(newProcess);
-		std::cout << "Process " << i << " created with " << minIns << " instructions \n";
+		std::cout << "Process " << processName << " created with " << minIns << " instructions \n";
 	}
 }
 
@@ -104,6 +103,11 @@ std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name)
 	return process;
 }
 
+std::vector<std::shared_ptr<CPUWorker>> GlobalScheduler::getWorkers()
+{
+	return workers;
+}
+
 //for debugging purposes only
 void GlobalScheduler::printConfig() {
 	std::cout << "++++++++++++++++++++++++++++++++\n";
@@ -115,45 +119,4 @@ void GlobalScheduler::printConfig() {
 	std::cout << "max-ins: " << maxIns << std::endl;
 	std::cout << "delay-per-exec: " << delaysPerExec << std::endl;
 	std::cout << "++++++++++++++++++++++++++++++++\n";
-}
-
-
-void GlobalScheduler::displayScreenLS() const 
-{
-    std::cout << "--------------------------------------------------\n";
-    std::cout << "Running processes:\n";
-    
-	bool noRunningProcesses = true;
-    // Loop through CPU workers to find actively executing processes
-    for (const auto& worker : workers) 
-    {
-        if (!worker->isFree()) 
-        {
-			noRunningProcesses = false;
-            auto p = worker->getCurrentProcess();
-            if (p != nullptr) 
-            {
-				//Reference: https://en.cppreference.com/cpp/io/manip/left
-                std::cout << std::left << std::setw(15) << p->getName()
-                          << "(" << p->getFormattedCreationTime() << ")    "
-                          << "Core: " << std::setw(5) << p->getCPUCoreID() 
-                          << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
-            }
-        }
-    }
-
-	if (noRunningProcesses) std::cout << "No running processes\n";
-
-    std::cout << "\nFinished processes:\n";
-	if (!finishedProcesses.empty()) {
-		for (const auto& p : finishedProcesses)
-		{
-			std::cout << std::left << std::setw(15) << p->getName()
-				<< "(" << p->getFormattedCreationTime() << ")    "
-				<< std::setw(12) << "Finished"
-				<< p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
-		}
-	}
-	else std::cout << "No finished processes\n";
-    std::cout << "--------------------------------------------------\n";
 }
