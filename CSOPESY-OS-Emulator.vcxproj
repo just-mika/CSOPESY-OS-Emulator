@@ -110,7 +110,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,13 +145,17 @@
     <ClCompile Include="src\Config.cpp" />
     <ClCompile Include="src\ConsoleManager.cpp" />
     <ClCompile Include="src\CPUWorker.cpp" />
+    <ClCompile Include="src\DeclareCommand.cpp" />
+    <ClCompile Include="src\ForCommand.cpp" />
     <ClCompile Include="src\GlobalScheduler.cpp" />
     <ClCompile Include="src\ICommand.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MainConsole.cpp" />
+    <ClCompile Include="src\MathCommand.cpp" />
     <ClCompile Include="src\OSThread.cpp" />
     <ClCompile Include="src\PrintCommand.cpp" />
     <ClCompile Include="src\Process.cpp" />
+    <ClCompile Include="src\SleepCommand.cpp" />
     <ClCompile Include="src\SymbolTable.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,12 +168,16 @@
     <ClInclude Include="src\Config.h" />
     <ClInclude Include="src\ConsoleManager.h" />
     <ClInclude Include="src\CPUWorker.h" />
+    <ClInclude Include="src\DeclareCommand.h" />
+    <ClInclude Include="src\ForCommand.h" />
     <ClInclude Include="src\GlobalScheduler.h" />
     <ClInclude Include="src\ICommand.h" />
     <ClInclude Include="src\MainConsole.h" />
+    <ClInclude Include="src\MathCommand.h" />
     <ClInclude Include="src\OSThread.h" />
     <ClInclude Include="src\PrintCommand.h" />
     <ClInclude Include="src\Process.h" />
+    <ClInclude Include="src\SleepCommand.h" />
     <ClInclude Include="src\SymbolTable.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

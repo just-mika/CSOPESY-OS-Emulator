@@ -132,3 +132,17 @@ void Process::pauseProcess() {
 	if (currentState == RUNNING)
 		currentState = READY;
 }
+
+void Process::setRemainingSleepTicks(int ticks) {
+	this->remainingSleepTicks = ticks;
+}
+
+int Process::getRemainingSleepTicks() const {
+	return remainingSleepTicks;
+}
+
+void Process::sleepProcess() {
+	if (currentState == RUNNING || currentState == READY) {
+		currentState = WAITING;
+	}
+}

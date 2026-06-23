@@ -10,6 +10,9 @@
 PrintCommand::PrintCommand(int pid, std::string processName, std::string& toPrint)
     : ICommand(pid, CommandType::PRINT), processName(processName), toPrint(toPrint)
 {
+    if (this->toPrint.empty()) {
+        this->toPrint = "Hello world from " + processName + "!";
+    }
 }
 
 void PrintCommand::execute()
