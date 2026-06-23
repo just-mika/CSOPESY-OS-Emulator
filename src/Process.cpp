@@ -76,10 +76,7 @@ void Process::nextInstruction()
 		currentState = RUNNING;
 	}
 	if (commandCounter < static_cast<int>(commandList.size())) {
-		std::shared_ptr<PrintCommand> printCmd = std::dynamic_pointer_cast<PrintCommand>(commandList[commandCounter]); // Current command being executed
-		if (printCmd) {
-			printCmd->setCoreID(this->cpuCoreID);
-		}
+		std::shared_ptr<ICommand> printCmd = std::dynamic_pointer_cast<ICommand>(commandList[commandCounter]); // Current command being executed
 
 		commandList[commandCounter]->execute();
 		moveToNextLine();
@@ -129,4 +126,9 @@ SymbolTable& Process::getSymbolTable()
 void Process::setCPUCoreID(int coreID)
 {
 	this->cpuCoreID = coreID;
+}
+
+void Process::pauseProcess() {
+	if (currentState == RUNNING)
+		currentState = READY;
 }

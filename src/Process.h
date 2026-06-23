@@ -35,6 +35,7 @@ class Process
 		void moveToNextLine();
 		void nextInstruction();
 		void initializeCommands(int limit);
+		void pauseProcess();
 
 		// Getters
 		bool isFinished() const;
