@@ -76,11 +76,27 @@ void Process::nextInstruction()
 		currentState = RUNNING;
 	}
 	if (commandCounter < static_cast<int>(commandList.size())) {
-		std::shared_ptr<ICommand> printCmd = std::dynamic_pointer_cast<ICommand>(commandList[commandCounter]); // Current command being executed
-
+		std::shared_ptr<PrintCommand> printCmd = std::dynamic_pointer_cast<PrintCommand>(commandList[commandCounter]); // Current command being executed
+		if (printCmd) {
+			printCmd->setCoreID(this->cpuCoreID);
+		}
 		commandList[commandCounter]->execute();
 		moveToNextLine();
 	}
+}
+
+void Process::incrementCyclesInCPU()
+{
+	cyclesInCPU++;
+}
+void Process::resetCyclesInCPU()
+{
+	cyclesInCPU = 0;
+}
+
+int Process::getCyclesInCPU() const
+{
+	return cyclesInCPU;
 }
 
 int Process::getCommandCounter() const

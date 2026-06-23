@@ -28,6 +28,7 @@ class Process
 		std::chrono::system_clock::time_point execDT; //date and time the process starts executing
 		SymbolTable symbolTable;            //symbol table for the process
 		std::time_t creationTime; 
+		int cyclesInCPU = 0;
 
 	public:
 		Process(int pid, std::string name);
@@ -36,6 +37,9 @@ class Process
 		void nextInstruction();
 		void initializeCommands(int limit);
 		void pauseProcess();
+		void incrementCyclesInCPU();
+		void resetCyclesInCPU();
+		int getCyclesInCPU() const;
 
 		// Getters
 		bool isFinished() const;
