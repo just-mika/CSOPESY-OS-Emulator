@@ -3,15 +3,16 @@
 #include <unordered_map>
 #include <variant>
 #include <iostream>
+#include <cstdint> // Needed for uint16_t
 
 enum class PrimitiveType
 {
-    INT,
+    UINT16,
     CHAR,
     FLOAT
 };
 
-typedef std::variant<int, char, float> PrimitiveValue;
+typedef std::variant<uint16_t, char, float> PrimitiveValue;
 
 struct Symbol
 {

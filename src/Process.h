@@ -28,6 +28,7 @@ class Process
 		std::chrono::system_clock::time_point execDT; //date and time the process starts executing
 		SymbolTable symbolTable;            //symbol table for the process
 		std::time_t creationTime; 
+		int remainingSleepTicks = 0;		// For sleep command, to track how many ticks are left for the process to sleep
 		int cyclesInCPU = 0;
 
 	public:
@@ -37,6 +38,7 @@ class Process
 		void nextInstruction();
 		void initializeCommands(int limit);
 		void pauseProcess();
+		void sleepProcess();
 		void incrementCyclesInCPU();
 		void resetCyclesInCPU();
 		int getCyclesInCPU() const;
@@ -50,10 +52,12 @@ class Process
 		ProcessState getState() const;
 		std::string getName() const;
 		std::string getFormattedCreationTime() const;
+		int getRemainingSleepTicks() const;
 		SymbolTable& getSymbolTable();
 
 		// Setters
 		void setCPUCoreID(int coreID);
+		void setRemainingSleepTicks(int ticks);
 };
 
 /*

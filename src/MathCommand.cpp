@@ -1,0 +1,43 @@
+#include "MathCommand.h"
+#include "GlobalScheduler.h"
+#include "Process.h"
+#include <algorithm>
+
+MathCommand::MathCommand(int pid, std::string processName, std::string targetVar, Operand op1, Operand op2, CommandType operation)
+    : ICommand(pid, operation), processName(processName), targetVar(targetVar), op1(op1), op2(op2)
+{
+}
+
+uint16_t MathCommand::evaluateOperand(const Operand& op, std::shared_ptr<Process> process)
+{
+	if (std::holds_alternative<uint16_t>(op)) { // If the operand is a uint16_t, return its value directly
+        return std::get<uint16_t>(op);
+    }
+    else {
+        std::string varName = std::get<std::string>(op);
+        PrimitiveValue val = process->getSymbolTable().getVariable(varName);
+        return std::get<uint16_t>(val);
+    }
+}
+void MathCommand::execute()
+{
+    std::shared_ptr<Process> process = GlobalScheduler::getInstance()->findProcess(this->processName);
+
+    if (process) {
+        uint16_t val1 = evaluateOperand(this->op1, process);
+        uint16_t val2 = evaluateOperand(this->op2, process);
+
+        int result = 0;
+
+        if (this->commandType == CommandType::ADD) {
+			result = static_cast<int>(val1) + static_cast<int>(val2); // Use int to prevent overflow during addition
+        }
+        else if (this->commandType == CommandType::SUBTRACT) {
+            result = static_cast<int>(val1) - static_cast<int>(val2);
+        }
+
+		result = std::clamp(result, 0, 65535); // Clamp the result to the range of uint16_t
+
+		process->getSymbolTable().setVariable(this->targetVar, PrimitiveType::UINT16, static_cast<uint16_t>(result)); // Store the final result as uint16_t
+    }
+}
