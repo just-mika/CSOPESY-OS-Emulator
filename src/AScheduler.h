@@ -25,7 +25,6 @@ public:
     std::shared_ptr<Process> findProcess(const std::string& processName);
     void run() override;
     void stop();
-    virtual void init() = 0;
     static SchedulingAlgorithm parseAlgorithm(std::string algo);
     std::deque<std::shared_ptr<Process>> getFinishedProcesses();
     std::deque<std::shared_ptr<Process>> getRunningProcesses();

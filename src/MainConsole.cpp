@@ -50,12 +50,13 @@ void MainConsole::handleCommand(const std::string& input) {
         else {
             Config temp;
             if (loadConfig(CONFIG_FILE, temp) && validateConfig(temp)) {
-                GlobalScheduler::initialize(temp);
+                GlobalScheduler::init(temp);
                 std::cout << "Config initialized successfully.\n";
             }
         }
     }
     else if (command == "exit") {
+        GlobalScheduler::getInstance()->stop();
         ConsoleManager::getInstance()->exitApplication();
     }
     else if (command == "clear") {
@@ -84,12 +85,19 @@ void MainConsole::handleCommand(const std::string& input) {
             std::cout << "Config not initialized yet.\n";
         }
         else {
-            GlobalScheduler::getInstance()->init();
+            GlobalScheduler::getInstance()->setGenerating(true);
             std::cout << "Scheduler started.\n";
         }
     }
     else if (command == "scheduler-stop") {
-        std::cout << command << " command recognized. Doing something.\n";
+        if (GlobalScheduler::getInstance() == nullptr) {
+            std::cout << "Config not initialized yet.\n";
+        }
+        else
+        {
+            GlobalScheduler::getInstance()->setGenerating(false);
+            std::cout << "Scheduler stopped. \n";
+        }
     }
     else if (command == "report-util") {
     	std::cout << command << " command recognized. Doing something.\n";

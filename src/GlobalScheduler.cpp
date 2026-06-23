@@ -18,6 +18,7 @@ GlobalScheduler::GlobalScheduler(Config config)
 void GlobalScheduler::run()
 {
 	running = true;
+
 	while (running)
 	{
 		tick();
@@ -49,6 +50,7 @@ void GlobalScheduler::run()
 			}
 		}
 		this->sleep(100);
+		cpuCycles++;
 	}
 }
 
@@ -57,20 +59,21 @@ GlobalScheduler* GlobalScheduler::getInstance()
 	return sharedInstance;
 }
 
-void GlobalScheduler::initialize(Config config) {
+void GlobalScheduler::init(Config config) {
 	if (!sharedInstance) {
 		sharedInstance = new GlobalScheduler(config);
 	}
+	sharedInstance->startWorkers();
+	sharedInstance->start();
 }
 
-void GlobalScheduler::init()
+void GlobalScheduler::startWorkers()
 {
 	// start workers
 	for (auto& worker : workers) {
 		worker->update(true);
 		worker->start();
 	}
-	this->start(); // start scheduler thread
 }
 
 void GlobalScheduler::destroy()
@@ -94,6 +97,7 @@ std::vector<std::shared_ptr<CPUWorker>> GlobalScheduler::getWorkers()
 
 void GlobalScheduler::tick()
 {
+	if (!generateProcesses) return;
 	if (cpuCycles % batchProcessFreq == 0) {
 		std::shared_ptr<Process> newProcess = generateProcess();
 
@@ -101,7 +105,11 @@ void GlobalScheduler::tick()
 		this->addProcess(newProcess);
 		//std::cout << "Process " << newProcess->getName() << " created with " << newProcess->getLinesOfCode() << " instructions \n";
 	}
-	cpuCycles++;
+}
+
+void GlobalScheduler::setGenerating(bool generating)
+{
+	generateProcesses = generating;
 }
 
 
