@@ -3,6 +3,9 @@
 #include <string>
 #include <variant>
 #include <cstdint>
+#include <memory>
+
+#include "Process.h"
 
 using Operand = std::variant<std::string, uint16_t>;
 

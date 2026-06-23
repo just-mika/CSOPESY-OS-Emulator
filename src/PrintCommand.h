@@ -6,9 +6,8 @@
 class PrintCommand : public ICommand
 {
 public:
-	PrintCommand(int pid, std::string processName, std::string toPrint, std::string varName);
+	PrintCommand(int pid, std::string processName, std::string toPrint, std::string varName = "");
 	void execute() override;
-	void setCoreID(int coreID);
 private:
 	std::string toPrint;
 	std::string processName;

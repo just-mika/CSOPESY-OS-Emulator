@@ -76,10 +76,9 @@ void Process::nextInstruction()
 		currentState = RUNNING;
 	}
 	if (commandCounter < static_cast<int>(commandList.size())) {
-		std::shared_ptr<PrintCommand> printCmd = std::dynamic_pointer_cast<PrintCommand>(commandList[commandCounter]); // Current command being executed
-		if (printCmd) {
-			printCmd->setCoreID(this->cpuCoreID);
-		}
+		std::shared_ptr<ICommand> cmd = std::dynamic_pointer_cast<ICommand>(commandList[commandCounter]); // Current command being executed
+		if (cmd)
+			cmd->setCoreID(cpuCoreID);
 		commandList[commandCounter]->execute();
 		moveToNextLine();
 	}

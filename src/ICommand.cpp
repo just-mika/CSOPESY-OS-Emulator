@@ -15,3 +15,8 @@ void ICommand::execute()
 {
 	
 }
+
+void ICommand::setCoreID(int coreID)
+{
+	this->activeCoreID = coreID;
+}

@@ -5,10 +5,12 @@
 #include <sstream>
 #include <iostream>
 
+#include "FileLogger.h"
 #include "GlobalScheduler.h"
+#include "SymbolTable.h"
 std::string convertPrimitiveToString(const PrimitiveValue& variantVal);
 
-PrintCommand::PrintCommand(int pid, std::string processName, std::string toPrint, std::string varName = "")
+PrintCommand::PrintCommand(int pid, std::string processName, std::string toPrint, std::string varName)
 	: ICommand(pid, CommandType::PRINT), processName(processName), toPrint(toPrint), variableName(varName)
 {
 	if (this->toPrint.empty() && this->variableName.empty()) {
@@ -30,8 +32,8 @@ void PrintCommand::execute()
 		}
 	}
 
-	// Send to your decoupled FileLogger layer!
-	//FileLogger::logToProcessFile(this->processName,  finalOutput);
+	//for debugging purposes only.
+	FileLogger::logCommandExecution(this->processName, this->activeCoreID, finalOutput);
 }
 
 std::string convertPrimitiveToString(const PrimitiveValue& variantVal)
