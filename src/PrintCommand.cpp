@@ -14,7 +14,6 @@ PrintCommand::PrintCommand(int pid, std::string processName, std::string& toPrin
 
 void PrintCommand::execute()
 {
-    int activeCoreID = GlobalScheduler::getInstance()->findProcess(processName)->getCPUCoreID();
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
     std::tm localTime;
@@ -32,10 +31,15 @@ void PrintCommand::execute()
     std::ofstream outFile(fileName, std::ios::app);    // Open file in append mode to add new content without overwriting
 
     if (outFile.is_open()) {
-        outFile << timestamp << " Core:" << activeCoreID << " \"" << this->toPrint << "\"\n";  // Save to text file with timestamp and core ID
+        outFile << timestamp << " Core:" << this->activeCoreID << " \"" << this->toPrint << "\"\n";  // Save to text file with timestamp and core ID
         outFile.close();
     }
     else {
         std::cerr << "Unable to open file: " << fileName << std::endl; // Handle error if file cannot be opened
     }
+}
+
+void PrintCommand::setCoreID(int coreID)
+{
+    this->activeCoreID = coreID;
 }
