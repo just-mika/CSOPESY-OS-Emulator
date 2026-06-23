@@ -3,6 +3,8 @@
 #include <iomanip>
 #include <sstream>
 #include <fstream>
+
+#include "FileLogger.h"
 #include "Windows.h"
 
 Process::Process(int pid, std::string name)
@@ -17,14 +19,8 @@ Process::Process(int pid, std::string name)
 
 void Process::initializeCommands(int limit)
 {
-	std::string fileName = this->name + ".txt";
-	std::ofstream outFile(fileName, std::ios::out);
-	if (outFile.is_open()) {
-		outFile << "Process name: " << this->name << "\n";
-		outFile << "Logs:\n\n";
-		outFile.close();
-	}
-
+	//comment this 
+	FileLogger::initializeProcessFile(this->name);
 	for (int i = 1; i <= limit; ++i) {
 		std::string printText = "Hello world from " + this->name + "!";
 		std::shared_ptr<ICommand> printCmd = std::make_shared<PrintCommand>(this->pID, this->name, printText); // Pass the process
