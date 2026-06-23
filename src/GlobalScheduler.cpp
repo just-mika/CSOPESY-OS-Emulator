@@ -21,36 +21,120 @@ void GlobalScheduler::run()
 
 	while (running)
 	{
-		tick();
-		for (auto& worker : workers) {
-			if (!worker->isFree() && worker->getCurrentProcess()->isFinished()) {
+		if (generateProcesses) tick();
 
-				auto finishedProc = worker->getCurrentProcess();
+		//check workers if current process is finished executing & update accordingly
+		//also updates the queue
+		updateWorkers();
 
-				std::unique_lock lock(mutex);
-				// Add to finished list
-				finishedProcesses.push_back(finishedProc);
-
-				// Remove from running list
-				auto it = std::find(runningProcesses.begin(), runningProcesses.end(), finishedProc);
-				if (it != runningProcesses.end()) {
-					runningProcesses.erase(it);
-				}
-				lock.unlock();
-				worker->assignProcess(nullptr); // Free the worker
-			}
+		if (algo == SchedulingAlgorithm::FCFS)
+		{
+			runFCFS();
 		}
-
-		for (auto& worker : workers) {
-			if (worker->isFree() && !readyQueue.empty()) {
-				auto process = readyQueue.front();
-				readyQueue.pop_front();
-				runningProcesses.push_back(process);
-				worker->assignProcess(process);
-			}
+		else if (algo == SchedulingAlgorithm::RR)
+		{
+			runRR();
 		}
+		
 		this->sleep(100);
 		cpuCycles++;
+	}
+}
+
+void GlobalScheduler::runFCFS()
+{
+	//First come first serve: simply iterate through CPU workers and add processes in the queue
+	for (auto& worker : workers) {
+		if (worker->isFree() && !readyQueue.empty()) {
+			std::unique_lock lock(mutex);
+			auto process = readyQueue.front();
+			readyQueue.pop_front();
+			runningProcesses.push_back(process);
+			lock.unlock();
+			worker->assignProcess(process);
+		}
+	}
+}
+
+void GlobalScheduler::runRR()
+{
+	for (auto& worker : workers) {
+		
+		auto process = worker->getCurrentProcess();
+
+		if (!worker->isFree()) {
+			auto process = worker->getCurrentProcess();
+			if (process->getCyclesInCPU() >= quantumCycles)
+			{
+				//only preempt if there is a process to switch to
+				if (!readyQueue.empty())
+				{
+					//pause process (change state from RUNNING to READY)
+					process->pauseProcess();
+					process->setCPUCoreID(-1);
+
+					std::unique_lock lock(mutex);
+
+					//place in process in ready queue
+					readyQueue.push_back(process);
+					// Remove from running list
+					auto it = std::find(runningProcesses.begin(), runningProcesses.end(), process);
+					if (it != runningProcesses.end()) {
+						runningProcesses.erase(it);
+					}
+
+					lock.unlock();
+					worker->assignProcess(nullptr); // Free the worker
+				}
+				//reset this whether or not RQ is empty.
+				process->resetCyclesInCPU();
+			}
+		}
+
+		//if the current worker (could be the currently preempted one) is free, add a new process
+		if (worker->isFree() && !readyQueue.empty())
+		{
+			std::unique_lock lock(mutex);
+
+			auto process = readyQueue.front();
+			readyQueue.pop_front();
+
+			runningProcesses.push_back(process);
+
+			lock.unlock();
+
+			worker->assignProcess(process);
+		}
+	}
+}
+
+
+void GlobalScheduler::updateWorkers()
+{
+	for (auto& worker : workers) {
+		if (worker->isFree()) {
+			continue; // Safely skip free workers
+		}
+
+		auto currentProc = worker->getCurrentProcess();
+
+		if (currentProc->isFinished()) {
+
+			std::unique_lock lock(mutex);
+			// Add to finished list
+			finishedProcesses.push_back(currentProc);
+
+			// Remove from running list
+			auto it = std::find(runningProcesses.begin(), runningProcesses.end(), currentProc);
+			if (it != runningProcesses.end()) {
+				runningProcesses.erase(it);
+			}
+			lock.unlock();
+			worker->assignProcess(nullptr); // Free the worker
+		}
+		else {
+			worker->getCurrentProcess()->incrementCyclesInCPU();
+		}
 	}
 }
 
@@ -97,7 +181,6 @@ std::vector<std::shared_ptr<CPUWorker>> GlobalScheduler::getWorkers()
 
 void GlobalScheduler::tick()
 {
-	if (!generateProcesses) return;
 	if (cpuCycles % batchProcessFreq == 0) {
 		std::shared_ptr<Process> newProcess = generateProcess();
 

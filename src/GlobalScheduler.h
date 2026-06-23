@@ -12,7 +12,6 @@ public:
 
     static void init(Config config);
     std::shared_ptr<Process> createUniqueProcess(std::string name);
-    std::shared_ptr<Process> findProcess(std::string name) const;
     std::vector<std::shared_ptr<CPUWorker>> getWorkers();
     //bool generateReport();
     void setGenerating(bool generating);
@@ -33,4 +32,7 @@ private:
     std::shared_ptr<AScheduler> scheduler;
     std::shared_ptr<Process> generateProcess();
     bool generateProcesses = false;
+    void runFCFS();
+    void runRR();
+    void updateWorkers();
 };
