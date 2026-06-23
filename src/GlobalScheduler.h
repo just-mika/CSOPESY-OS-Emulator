@@ -23,10 +23,14 @@ public:
     void printConfig();
     bool isInitialized();
 
+    friend class CPUWorker;
+
 private:
     GlobalScheduler(Config config);
     ~GlobalScheduler() = default;
     GlobalScheduler& operator=(GlobalScheduler const&) { }
     static GlobalScheduler* sharedInstance;
     std::vector<std::shared_ptr<CPUWorker>> workers;
+    std::shared_ptr<AScheduler> scheduler;
+    std::shared_ptr<Process> generateProcess();
 };

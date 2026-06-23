@@ -40,6 +40,8 @@ protected:
     unsigned long long delaysPerExec;
 
     mutable std::shared_mutex mutex;
+    int cpuCycles = 0;
+    int nextPID = 0;
 
     std::atomic<bool> running = false;
     std::deque<std::shared_ptr<Process>> readyQueue;

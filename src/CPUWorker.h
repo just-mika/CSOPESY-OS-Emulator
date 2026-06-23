@@ -21,4 +21,5 @@ private:
     std::atomic<bool> running = false;
     std::shared_ptr<Process> currentProcess = nullptr;
     mutable std::mutex mutex;
+    int cpuCycles = 0;
 };

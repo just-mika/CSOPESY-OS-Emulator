@@ -6,13 +6,10 @@ int main()
     ConsoleManager::initialize();
 
     bool running = true;
-    int cpuCycles = 0;
 
     while (running)
     {
         ConsoleManager::getInstance()->process();
-
-        cpuCycles++;
         running = ConsoleManager::getInstance()->isRunning();
     }
 

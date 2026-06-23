@@ -11,8 +11,7 @@ AScheduler::AScheduler(Config config)
     quantumCycles(config.quantumCycles),
     batchProcessFreq(config.batchProcessFreq),
     minIns(config.minIns),
-    maxIns(config.maxIns),
-    delaysPerExec(config.delaysPerExec)
+    maxIns(config.maxIns)
 { }
 
 

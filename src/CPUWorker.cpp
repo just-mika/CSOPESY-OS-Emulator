@@ -2,6 +2,9 @@
 #include <iostream>
 #include <thread>
 
+#include "GlobalScheduler.h"
+
+
 CPUWorker::CPUWorker(int coreID)
     : coreID(coreID)
 {
@@ -33,13 +36,16 @@ void CPUWorker::update(bool isRunning) {
 
 void CPUWorker::run() {
     //std::cout << "CPUWorker " << coreID << " thread started\n";
+    auto g = GlobalScheduler::getInstance();
     while (running) {
-        std::unique_lock lock(mutex);
-        if (currentProcess != nullptr && !currentProcess->isFinished()) {
-            currentProcess->nextInstruction();
+        if (g->cpuCycles % (g->delaysPerExec + 1) == 0){
+            std::unique_lock lock(mutex);
+            if (currentProcess != nullptr && !currentProcess->isFinished()) {
+                currentProcess->nextInstruction();
+            }
+            lock.unlock();
         }
-        lock.unlock();
-
+        cpuCycles++;
         this->sleep(100);
     }
     std::cout << "CPUWorker " << coreID << " thread stopped\n";

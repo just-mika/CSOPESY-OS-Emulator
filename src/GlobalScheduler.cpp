@@ -20,6 +20,7 @@ void GlobalScheduler::run()
 	running = true;
 	while (running)
 	{
+		tick();
 		for (auto& worker : workers) {
 			if (!worker->isFree() && worker->getCurrentProcess()->isFinished()) {
 
@@ -65,28 +66,11 @@ void GlobalScheduler::initialize(Config config) {
 void GlobalScheduler::init()
 {
 	// start workers
-
 	for (auto& worker : workers) {
 		worker->update(true);
 		worker->start();
 	}
 	this->start(); // start scheduler thread
-
-	// create 10 dummy processes
-	for (int i = 1; i <= batchProcessFreq; ++i) {
-		std::string processName = "screen_";
-		if (i < 10) processName += "0";
-		processName += std::to_string(i);
-
-		std::shared_ptr<Process> newProcess = std::make_shared<Process>(i, processName);
-
-		// Load the 100 commands into this process
-		newProcess->initializeCommands(minIns);
-
-		// Add to the Ready Queue
-		this->addProcess(newProcess);
-		std::cout << "Process " << processName << " created with " << minIns << " instructions \n";
-	}
 }
 
 void GlobalScheduler::destroy()
@@ -106,6 +90,34 @@ std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name)
 std::vector<std::shared_ptr<CPUWorker>> GlobalScheduler::getWorkers()
 {
 	return workers;
+}
+
+void GlobalScheduler::tick()
+{
+	if (cpuCycles % batchProcessFreq == 0) {
+		std::shared_ptr<Process> newProcess = generateProcess();
+
+		// Add to the Ready Queue
+		this->addProcess(newProcess);
+		//std::cout << "Process " << newProcess->getName() << " created with " << newProcess->getLinesOfCode() << " instructions \n";
+	}
+	cpuCycles++;
+}
+
+
+std::shared_ptr<Process> GlobalScheduler::generateProcess()
+{
+	std::string processName = "screen_";
+	if (++nextPID < 10) processName += "0";
+	processName += std::to_string(nextPID);
+
+	std::shared_ptr<Process> newProcess = std::make_shared<Process>(nextPID, processName);
+
+	int totalCommands = (rand() % (maxIns-minIns + 1)) + minIns;
+
+	newProcess->initializeCommands(totalCommands);
+
+	return newProcess;
 }
 
 //for debugging purposes only
