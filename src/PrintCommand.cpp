@@ -6,39 +6,49 @@
 #include <iostream>
 
 #include "GlobalScheduler.h"
+std::string convertPrimitiveToString(const PrimitiveValue& variantVal);
 
-PrintCommand::PrintCommand(int pid, std::string processName, std::string& toPrint)
-    : ICommand(pid, CommandType::PRINT), processName(processName), toPrint(toPrint)
+PrintCommand::PrintCommand(int pid, std::string processName, std::string toPrint, std::string varName = "")
+	: ICommand(pid, CommandType::PRINT), processName(processName), toPrint(toPrint), variableName(varName)
 {
-    if (this->toPrint.empty()) {
+	if (this->toPrint.empty() && this->variableName.empty()) {
         this->toPrint = "Hello world from " + processName + "!";
     }
 }
 
 void PrintCommand::execute()
 {
-    int activeCoreID = GlobalScheduler::getInstance()->findProcess(processName)->getCPUCoreID();
-    auto now = std::chrono::system_clock::now();
-    std::time_t t = std::chrono::system_clock::to_time_t(now);
-    std::tm localTime;
+	std::string finalOutput = toPrint;
 
-#ifdef _WIN32
-    localtime_s(&localTime, &t);
-#else
-    localtime_r(&t, &localTime);
-#endif
-    std::ostringstream timeStream;
-    timeStream << std::put_time(&localTime, "(%m/%d/%Y %I:%M:%S%p)");
-    std::string timestamp = timeStream.str();
+	if (!variableName.empty()) {
+		auto process = GlobalScheduler::getInstance()->findProcess(processName);
+		if (process) {
+			// 1. Fetch the variant from the symbol table
+			PrimitiveValue variantVal = process->getSymbolTable().getVariable(variableName);
 
-    std::string fileName = this->processName + ".txt"; // Create file name based on process name
-    std::ofstream outFile(fileName, std::ios::app);    // Open file in append mode to add new content without overwriting
+			finalOutput += convertPrimitiveToString(variantVal);
+		}
+	}
 
-    if (outFile.is_open()) {
-        outFile << timestamp << " Core:" << activeCoreID << " \"" << this->toPrint << "\"\n";  // Save to text file with timestamp and core ID
-        outFile.close();
-    }
-    else {
-        std::cerr << "Unable to open file: " << fileName << std::endl; // Handle error if file cannot be opened
-    }
+	// Send to your decoupled FileLogger layer!
+	//FileLogger::logToProcessFile(this->processName,  finalOutput);
+}
+
+std::string convertPrimitiveToString(const PrimitiveValue& variantVal)
+{
+	return std::visit([](auto&& arg) -> std::string {
+		using T = std::decay_t<decltype(arg)>;
+
+		if constexpr (std::is_same_v<T, uint16_t>) {
+			return std::to_string(arg); // Converts uint16_t to string
+		}
+		else if constexpr (std::is_same_v<T, float>) {
+			return std::to_string(arg); // Converts float to string
+		}
+		else if constexpr (std::is_same_v<T, char>) {
+			return std::string(1, arg); // Converts a single char to string
+		}
+
+		return "";
+		}, variantVal);
 }
