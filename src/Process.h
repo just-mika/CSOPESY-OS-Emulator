@@ -6,6 +6,15 @@
 #include "ICommand.h"
 #include "SymbolTable.h"
 #include <ctime>
+#include <stack>
+
+struct LoopFrame {
+	int forIndex;
+	int bodyStart;
+	int bodyEnd;
+	int repeats;
+	int currentIteration;
+};
 
 enum ProcessState {
 	READY,
@@ -30,11 +39,11 @@ class Process
 		std::time_t creationTime; 
 		int remainingSleepTicks = 0;		// For sleep command, to track how many ticks are left for the process to sleep
 		int cyclesInCPU = 0;
+		std::stack<LoopFrame> loopStack;
 
 	public:
 		Process(int pid, std::string name);
 		void addCommand(std::shared_ptr<ICommand> command);
-		void moveToNextLine();
 		void nextInstruction();
 		void initializeCommands(int limit);
 		void pauseProcess();
