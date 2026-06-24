@@ -141,6 +141,16 @@ void Process::addCommand(std::shared_ptr<ICommand> command)
 		}
 	}
 }
+void Process::saveLog(std::string printedString) {
+	time_t nowT = std::time(nullptr);
+	std::string toSave = "(" + formatTime(nowT) + ")  ";
+	toSave += "Core: " + std::to_string(cpuCoreID) + " " + printedString;
+	printLogs->push_back(toSave);
+}
+
+std::shared_ptr<std::vector<std::string>> Process::getPrintLogs() const {
+	return printLogs;
+}
 
 void Process::nextInstruction() {
 	if (isFinished() || commandList.empty()) return;
@@ -149,18 +159,75 @@ void Process::nextInstruction() {
 		execDT = std::chrono::system_clock::now();
 		currentState = RUNNING;
 	}
-	if (commandCounter < static_cast<int>(commandList.size())) {
-		std::shared_ptr<ICommand> cmd = std::dynamic_pointer_cast<ICommand>(commandList[commandCounter]); // Current command being executed
+
+	if (commandCounter < commandList.size()) {
+		auto& cmd = commandList[commandCounter];
 		if (cmd->getCommandType() == CommandType::PRINT) {
 			auto printCmd = std::dynamic_pointer_cast<PrintCommand>(cmd);
 			if (printCmd) {
 				saveLog(printCmd->getToPrint());
 			}
 		}
-		cmd->execute();
-		moveToNextLine();
+		// PROCESSING A FOR LOOP COMMAND
+		/*
+		 *  Instead of executing nested FOR loops instantly in a single clock cycle (which would block the CPU
+		 *  and break quantum preemption or SLEEP commands), this keeps instructions in a flat list and uses a
+		 *  'loopStack' to track nested loops.
+		 *
+		 *  This design lets our scheduler safely pause, sleep, or preempt the process at any specific line
+		 *  inside a possibly nested loop structure.
+		*/
+
+		if (cmd->getCommandType() == CommandType::FOR) {
+			auto forCmd = std::dynamic_pointer_cast<ForCommand>(cmd);
+
+			// Check if this FOR is already on the stack
+			if (!loopStack.empty() && loopStack.top().forIndex == commandCounter) {
+				loopStack.top().currentIteration++;
+
+				// Case if loop has completed all its required repetitions
+				if (loopStack.top().currentIteration >= forCmd->repeats) {
+					loopStack.pop();                      // Remove this loop layer from stack
+					commandCounter = forCmd->bodyEnd + 1; // Advance past the loop body entirely
+
+					// If we just exited an inner loop but are still inside a parent loop body,
+					// jump back to evaluate the parent loop header.
+					if (!loopStack.empty() && commandCounter > loopStack.top().bodyEnd) {
+						commandCounter = loopStack.top().forIndex;
+					}
+				}
+				// Loop still has repetitions remaining -> jump back to start of its body
+				else {
+					commandCounter = forCmd->bodyStart;
+				}
+			}
+			// First time hitting this FOR block -> Register loop parameters onto our execution stack
+			else {
+				loopStack.push({
+					commandCounter,
+					forCmd->bodyStart,
+					forCmd->bodyEnd,
+					forCmd->repeats, 0 });
+				commandCounter = forCmd->bodyStart; // Step cleanly into the first line of the loop body
+			}
+		}
+		else {
+			cmd->execute();
+			commandCounter++;
+
+			// Check if we just walked past the end line of our active loop body.
+			if (!loopStack.empty() && commandCounter > loopStack.top().bodyEnd) {
+				commandCounter = loopStack.top().forIndex;
+			}
+		}
+	}
+
+	// Only finish if the list is exhausted AND no loops are left open on the stack
+	if (commandCounter >= (int)commandList.size() && loopStack.empty()) {
+		currentState = FINISHED;
 	}
 }
+
 
 void Process::incrementCyclesInCPU()
 {

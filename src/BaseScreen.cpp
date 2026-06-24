@@ -53,7 +53,7 @@ void BaseScreen::printProcessInfo() const{
 		std::cout << "\nFinished!\n\n";
 	}
 	else {
-		std::cout << "Current instruction line: " << attachedProcess->getCommandCounter() << "\n";
+		std::cout << "\nCurrent instruction line: " << attachedProcess->getCommandCounter() << "\n";
 		std::cout << "Lines of code: " << attachedProcess->getLinesOfCode() << "\n\n";
 	}
 }
