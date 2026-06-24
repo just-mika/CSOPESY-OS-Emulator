@@ -271,7 +271,6 @@ void GlobalScheduler::generateReport()
         return;
     }
 
-    // 1. Calculate CPU Utilization
     int activeCores = 0;
     for (const auto& worker : workers) 
     {
