@@ -34,7 +34,7 @@ void MainConsole::onEnabled()
 {
     display();
 }
-#include "OSThread.h"
+
 void MainConsole::handleCommand(const std::string& input) {
     std::string command;
     std::string args[2];
@@ -81,10 +81,8 @@ void MainConsole::handleCommand(const std::string& input) {
                 std::cout << "Please enter the process name.\n";
             }
             else {
-                std::cerr << "Here111";
                 auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
                 if (process != nullptr) {
-                    OSThread::sleep(100);
                     auto screen = std::make_shared<BaseScreen>(process, args[1]);
                     ConsoleManager::getInstance()->registerScreen(screen);
                     ConsoleManager::getInstance()->switchToScreen(screen->getName());
@@ -93,6 +91,23 @@ void MainConsole::handleCommand(const std::string& input) {
                     std::cout << "Screen attach failed. Process " << args[1] << " not found.";
                 }
              } 
+        }
+        else if (args[0] == "-r") {
+            if (args[1] == "") {
+                std::cout << "Please enter the process name.\n";
+            }
+            else {
+                auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
+                if (process != nullptr && process->getState() != ProcessState::FINISHED) {
+                    OSThread::sleep(100);
+                    auto screen = std::make_shared<BaseScreen>(process, args[1]);
+                    ConsoleManager::getInstance()->registerScreen(screen);
+                    ConsoleManager::getInstance()->switchToScreen(screen->getName());
+                }
+                else {
+                    std::cout << "Screen attach failed. Process " << args[1] << " not found.";
+                }
+            }
         }
         else {
             std::cout << "Invalid arguments for " << command << " command.\n";
@@ -146,7 +161,6 @@ void printCommand(std::string command, std::string args[2]) {
     std::cout << "++++++++++++++++++++++++++++++++\n";
 }
 
-
 void printHeader()
 {
     std::cout << "*==================================================*";
@@ -198,7 +212,7 @@ void MainConsole::displayScreenLS() const
     {
         for (const auto& p : runningProcesses){
             std::cout << std::left << std::setw(15) << p->getName()
-                << "(" << p->getFormattedCreationTime() << ")    "
+                << "(" << p->getCreatedTime() << ")    "
                 << "Core: " << std::setw(5) << p->getCPUCoreID()
                 << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
         }
@@ -212,7 +226,7 @@ void MainConsole::displayScreenLS() const
         for (const auto& p : finishedProcesses)
         {
             std::cout << std::left << std::setw(15) << p->getName()
-                << "(" << p->getFormattedCreationTime() << ")    "
+                << "(" << p->getCreatedTime() << ")    "
                 << std::setw(12) << "Finished"
                 << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
         }

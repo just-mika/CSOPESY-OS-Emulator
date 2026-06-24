@@ -24,18 +24,15 @@ PrintCommand::PrintCommand(int pid, std::string toPrint, std::string varName)
 	: ICommand(pid, CommandType::PRINT), toPrint(toPrint), varName(varName)
 {
 }
-
-void PrintCommand::execute()
-{
+void PrintCommand::processStringToPrint() {
 	auto process = GlobalScheduler::getInstance()->findProcess(pid);
 	if (!process) return;
 
 	std::string finalOutput = this->toPrint;
 
 	if (finalOutput.empty() && this->varName.empty()) {
-		finalOutput = "Hello world from " + process->getName() + "!"; 
+		finalOutput = "Hello world from " + process->getName() + "!";
 	}
-
 	if (!this->varName.empty()) {
 		PrimitiveValue liveVariable = process->getSymbolTable().getVariable(this->varName).value;
 
@@ -46,8 +43,21 @@ void PrintCommand::execute()
 			finalOutput += "[UNINITIALIZED/NULL VAR]";
 		}
 	}
+	this->toPrint = finalOutput;
+}
+
+std::string PrintCommand::getToPrint() {
+	processStringToPrint();
+	return toPrint;
+}
+void PrintCommand::execute()
+{
+	auto process = GlobalScheduler::getInstance()->findProcess(pid);
+	if (!process) return;
+
+	processStringToPrint();
 
 	// For debugging purposes only
-	FileLogger::logCommandExecution(process->getName(), process->getCPUCoreID(), finalOutput);
+	FileLogger::logCommandExecution(process->getName(), process->getCPUCoreID(), this->toPrint);
 }
 

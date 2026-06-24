@@ -295,7 +295,7 @@ void GlobalScheduler::generateReport()
         for (const auto& p : running) 
         {
             outFile << std::left << std::setw(15) << p->getName()
-                    << "(" << p->getFormattedCreationTime() << ")    "
+                    << "(" << p->getCreatedTime() << ")    "
                     << "Core: " << std::setw(5) << p->getCPUCoreID()
                     << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
         }
@@ -312,7 +312,7 @@ void GlobalScheduler::generateReport()
         for (const auto& p : finished) 
         {
             outFile << std::left << std::setw(15) << p->getName()
-                    << "(" << p->getFormattedCreationTime() << ")    "
+                    << "(" << p->getCreatedTime() << ")    "
                     << std::setw(12) << "Finished"
                     << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
         }

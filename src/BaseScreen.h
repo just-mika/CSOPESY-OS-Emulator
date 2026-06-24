@@ -2,6 +2,7 @@
 #include <memory>
 #include "AConsole.h"
 #include "Process.h"
+#include <mutex>
 #include <string>
 
 class BaseScreen : public AConsole

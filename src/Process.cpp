@@ -19,6 +19,7 @@ Process::Process(int pid, std::string name)
 	this->currentState = READY;
 	this->cpuCoreID = -1; // has not been assigned to a core yet
 	this->creationTime = std::time(nullptr);
+	this->printLogs = std::make_shared<std::vector<std::string>>();
 }
 
 // Helper function to generate a block of commands for a FOR loop, with depth control to prevent infinite nesting
@@ -87,24 +88,21 @@ void Process::initializeCommands(int limit)
 	}
 }
 
-std::string Process::getFormattedCreationTime() const
-{
-    std::tm tm_struct;
-    
-    // Thread-safe local time extraction (for both Windows and Mac)
-	// Reference: https://cplusplus.com/forum/general/189594/
+std::string static formatTime(time_t timeToFormat) {
+	std::tm tm_struct;
 #ifdef _WIN32
-    localtime_s(&tm_struct, &this->creationTime);
+	localtime_s(&tm_struct, &timeToFormat);
 #else
-    localtime_r(&this->creationTime, &tm_struct);
+	localtime_r(&timeToFormat, &tm_struct);
 #endif
-
-    std::stringstream ss;
-    ss << std::put_time(&tm_struct, "%m/%d/%Y %I:%M:%S%p");
-    return ss.str();
+		std::stringstream ss;
+		ss << std::put_time(&tm_struct, "%m/%d/%Y %I:%M:%S%p");
+		return ss.str();
 }
 
-
+std::string Process::getCreatedTime() const {
+	return formatTime(this->creationTime);
+}
 void Process::addCommand(std::shared_ptr<ICommand> command)
 {
 	if (command != nullptr) {
@@ -120,6 +118,15 @@ void Process::moveToNextLine()
 	}
 }
 
+void Process::saveLog(std::string printedString) {
+	time_t nowT = std::time(nullptr);
+	std::string toSave = "(" + formatTime(nowT) + ")  ";
+	toSave += "Core: " + std::to_string(cpuCoreID) + " " + printedString;
+	printLogs->push_back(toSave);
+}
+std::shared_ptr<std::vector<std::string>> Process::getPrintLogs() const{
+	return printLogs;
+}
 void Process::nextInstruction()
 {
 	if (isFinished() || commandList.empty()) {
@@ -131,7 +138,13 @@ void Process::nextInstruction()
 	}
 	if (commandCounter < static_cast<int>(commandList.size())) {
 		std::shared_ptr<ICommand> cmd = std::dynamic_pointer_cast<ICommand>(commandList[commandCounter]); // Current command being executed
-		commandList[commandCounter]->execute();
+		if (cmd->getCommandType() == CommandType::PRINT) {
+			auto printCmd = std::dynamic_pointer_cast<PrintCommand>(cmd);
+			if (printCmd) {
+				saveLog(printCmd->getToPrint());
+			}
+		}
+		cmd->execute();
 		moveToNextLine();
 	}
 }
