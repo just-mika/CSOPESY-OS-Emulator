@@ -198,14 +198,14 @@ void GlobalScheduler::setGenerating(bool generating)
 
 std::shared_ptr<Process> GlobalScheduler::generateProcess()
 {
-	std::string processName = "screen_";
+	std::string processName = "process_";
 	if (++nextPID < 10) processName += "0";
 	processName += std::to_string(nextPID);
 
 	std::shared_ptr<Process> newProcess = std::make_shared<Process>(nextPID, processName);
 
 	int totalCommands = (rand() % (maxIns-minIns + 1)) + minIns;
-
+	
 	newProcess->initializeCommands(totalCommands);
 
 	return newProcess;

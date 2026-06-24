@@ -48,5 +48,5 @@ void CPUWorker::run() {
         cpuCycles++;
         this->sleep(100);
     }
-    std::cout << "CPUWorker " << coreID << " thread stopped\n";
+    //std::cout << "CPUWorker " << coreID << " thread stopped\n";
 }

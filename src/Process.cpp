@@ -20,20 +20,9 @@ Process::Process(int pid, std::string name)
 
 void Process::initializeCommands(int limit)
 {
-	//comment this in final submit
 	FileLogger::initializeProcessFile(this->name);
 
-	// 2. Pure instruction generation loop
 	for (int i = 1; i <= limit; ++i) {
-
-		//GENERATE PRINTS
-		/*
-		std::shared_ptr<ICommand> generatedCmd = std::make_shared<PrintCommand>(this->pID); // Pass the process
-		this->addCommand(generatedCmd); // Add the command to the process's command list
-		Sleep(1);
-		this->addCommand(generatedCmd);*/
-
-		//GENERATE DECLARES
 		std::string varName = "v" + std::to_string(i);
 		uint16_t randomDefaultValue = static_cast<uint16_t>(rand() % 65536);
 		std::shared_ptr<ICommand> generatedCmd = std::make_shared<DeclareCommand>(
