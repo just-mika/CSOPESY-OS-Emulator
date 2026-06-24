@@ -26,7 +26,7 @@ std::shared_ptr<Process> AScheduler::findProcess(const std::string& processName)
     std::shared_lock lock(mutex);
     for (int i = 0; i < processTable.size(); i++) {
         auto process = processTable[i];
-        if (process->getName() == processName)
+        if (process && process->getName() == processName)
             return process;
     }
 	lock.unlock();

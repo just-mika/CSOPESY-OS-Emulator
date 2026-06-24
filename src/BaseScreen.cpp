@@ -12,10 +12,11 @@ void BaseScreen::onEnabled(){}
 void BaseScreen::process(){
 	if (!(this->refreshed)){
 		this->refreshed = true;
-		this->printProcessInfo();
+		this->display();
 	}
 
-	std::cout << "Enter command: ";
+
+	std::cout << "root:\\> ";
 
 	std::string command;
 	std::getline(std::cin, command);
@@ -29,12 +30,30 @@ void BaseScreen::process(){
 	}
 		
 }
-void BaseScreen::display(){}
+void BaseScreen::display(){
+	std::cout << "Process name: " << attachedProcess->getName() << "\n";
+	std::cout << "ID: " << attachedProcess->getPID() << "\n\n";
+	std::cout << "Current instruction line: " << attachedProcess->getCommandCounter() << "\n";
+	std::cout << "Lines of code: " << attachedProcess->getLinesOfCode() << "\n\n";
+}
 
 //Prints info about the process
 // Attributes needed: processName, execDT, core 
 // just format and print the info as is
-void BaseScreen::printProcessInfo() const{}
+void BaseScreen::printProcessInfo() const{
+	std::cout << "Process name: " << attachedProcess->getName() << "\n";
+	std::cout << "ID: " << attachedProcess->getPID() << "\n\n";
+	std::cout << "Logs:\n";
+
+
+	if (attachedProcess->isFinished()) {
+		std::cout << "Finished!\n\n";
+	}
+	else {
+		std::cout << "Current instruction line: " << attachedProcess->getCommandCounter() << "\n";
+		std::cout << "Lines of code: " << attachedProcess->getLinesOfCode() << "\n\n";
+	}
+}
 
 //prints the current instruction of attached process
 void BaseScreen::printCurrentLine() const

@@ -33,7 +33,7 @@ void PrintCommand::execute()
 	std::string finalOutput = this->toPrint;
 
 	if (finalOutput.empty() && this->varName.empty()) {
-		finalOutput = "Hello world from " + process->getName() + "!"; // 
+		finalOutput = "Hello world from " + process->getName() + "!"; 
 	}
 
 	if (!this->varName.empty()) {

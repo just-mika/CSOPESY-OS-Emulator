@@ -1,12 +1,15 @@
 #include "Process.h"
 #include "PrintCommand.h"
+#include "DeclareCommand.h"
+#include "MathCommand.h"
+#include "SleepCommand.h"
+#include "FileLogger.h"
+#include "ForCommand.h"
+#include "Windows.h"
 #include <iomanip>
 #include <sstream>
 #include <fstream>
-
-#include "DeclareCommand.h"
-#include "FileLogger.h"
-#include "Windows.h"
+#include <cstdlib>
 
 Process::Process(int pid, std::string name)
 {
@@ -18,31 +21,69 @@ Process::Process(int pid, std::string name)
 	this->creationTime = std::time(nullptr);
 }
 
+// Helper function to generate a block of commands for a FOR loop, with depth control to prevent infinite nesting
+static std::vector<std::shared_ptr<ICommand>> generateCommandBlock(int pID, std::string procName, int numCmds, int currentDepth)
+{
+	std::vector<std::shared_ptr<ICommand>> block;
+
+	for (int i = 0; i < numCmds; ++i) {
+
+		// If depth is 3 or more, restrict to cases 0-4 (No FOR loops). Otherwise, cases 0-5.
+		int maxCommandType = (currentDepth >= 3) ? 5 : 6;
+		int commandType = rand() % maxCommandType;
+
+		std::shared_ptr<ICommand> generatedCmd = nullptr;
+
+		std::string randomVar1 = "v" + std::to_string(rand() % 5);
+		std::string randomVar2 = "v" + std::to_string(rand() % 5);
+		uint16_t randomVal = static_cast<uint16_t>(rand() % 65536);
+
+		switch (commandType) {
+		case 0:
+			generatedCmd = std::make_shared<PrintCommand>(pID, procName, "");
+			break;
+		case 1:
+			generatedCmd = std::make_shared<DeclareCommand>(pID, procName, randomVar1, randomVal);
+			break;
+		case 2:
+			generatedCmd = std::make_shared<MathCommand>(pID, procName, randomVar1, randomVar2, randomVal, CommandType::ADD);
+			break;
+		case 3:
+			generatedCmd = std::make_shared<MathCommand>(pID, procName, randomVar1, randomVar2, randomVal, CommandType::SUBTRACT);
+			break;
+		case 4:
+			generatedCmd = std::make_shared<SleepCommand>(pID, procName, static_cast<uint8_t>((rand() % 5) + 1));
+			break;
+		case 5: {
+			// FOR LOOP
+			int innerCmdsAmount = (rand() % 3) + 1;
+			int repeats = (rand() % 4) + 2;
+
+			// Call the helper recursively to generate the inner block of commands, increasing the depth by 1	
+			auto innerBlock = generateCommandBlock(pID, procName, innerCmdsAmount, currentDepth + 1);
+			generatedCmd = std::make_shared<ForCommand>(pID, innerBlock, repeats);
+			break;
+		}
+		}
+
+		if (generatedCmd != nullptr) {
+			block.push_back(generatedCmd);
+		}
+	}
+	return block;
+}
+
 void Process::initializeCommands(int limit)
 {
 	//comment this in final submit
 	FileLogger::initializeProcessFile(this->name);
 
-	// 2. Pure instruction generation loop
-	for (int i = 1; i <= limit; ++i) {
+	// Call helper function to create a list of commands
+	std::vector<std::shared_ptr<ICommand>> initialCommands = generateCommandBlock(this->pID, this->name, limit, 1); // Add 1 for command loop depth
 
-		//GENERATE PRINTS
-		/*
-		std::shared_ptr<ICommand> generatedCmd = std::make_shared<PrintCommand>(this->pID); // Pass the process
-		this->addCommand(generatedCmd); // Add the command to the process's command list
-		Sleep(1);
-		this->addCommand(generatedCmd);*/
-
-		//GENERATE DECLARES
-		std::string varName = "v" + std::to_string(i);
-		uint16_t randomDefaultValue = static_cast<uint16_t>(rand() % 65536);
-		std::shared_ptr<ICommand> generatedCmd = std::make_shared<DeclareCommand>(
-			this->pID,
-			varName,
-			randomDefaultValue
-		);
-		Sleep(1);
-		this->addCommand(generatedCmd);
+	// Add them all to the process
+	for (const auto& cmd : initialCommands) {
+		this->addCommand(cmd);
 	}
 }
 
@@ -107,6 +148,12 @@ void Process::resetCyclesInCPU()
 int Process::getCyclesInCPU() const
 {
 	return cyclesInCPU;
+}
+
+void Process::decrementSleepTicks() {
+	if (remainingSleepTicks > 0) {
+		remainingSleepTicks--;
+	}
 }
 
 int Process::getCommandCounter() const
