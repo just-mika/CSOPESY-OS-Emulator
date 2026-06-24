@@ -39,6 +39,8 @@ class Process
 		std::time_t creationTime; 
 		int remainingSleepTicks = 0;		// For sleep command, to track how many ticks are left for the process to sleep
 		int cyclesInCPU = 0;
+		std::shared_ptr<std::vector<std::string>> printLogs; 
+		void saveLog(std::string printedString);
 		std::stack<LoopFrame> loopStack;
 
 	public:
@@ -59,9 +61,10 @@ class Process
 		int getLinesOfCode() const;
 		int getPID() const;
 		int getCPUCoreID() const;
+		std::shared_ptr<std::vector<std::string>> getPrintLogs() const;
 		ProcessState getState() const;
 		std::string getName() const;
-		std::string getFormattedCreationTime() const;
+		std::string getCreatedTime() const;
 		int getRemainingSleepTicks() const;
 		SymbolTable& getSymbolTable();
 

@@ -3,10 +3,7 @@
 #include "ConsoleManager.h"
 #include <string>
 
-BaseScreen::BaseScreen(std::shared_ptr<Process> process, std::string processName) : AConsole(processName)
-{
-	this->attachedProcess = process;
-}
+BaseScreen::BaseScreen(std::shared_ptr<Process> process, std::string processName) : AConsole(processName), attachedProcess(process) {}
 void BaseScreen::onEnabled(){}
 
 void BaseScreen::process(){
@@ -45,9 +42,15 @@ void BaseScreen::printProcessInfo() const{
 	std::cout << "ID: " << attachedProcess->getPID() << "\n\n";
 	std::cout << "Logs:\n";
 
-
+	auto logs = attachedProcess->getPrintLogs();
+	if (logs) {
+		for (const auto& log : *logs) {
+			std::cout << log << "\n";
+		}
+	}
+	
 	if (attachedProcess->isFinished()) {
-		std::cout << "Finished!\n\n";
+		std::cout << "\nFinished!\n\n";
 	}
 	else {
 		std::cout << "Current instruction line: " << attachedProcess->getCommandCounter() << "\n";
