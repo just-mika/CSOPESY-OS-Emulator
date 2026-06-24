@@ -40,19 +40,19 @@ static std::vector<std::shared_ptr<ICommand>> generateCommandBlock(int pID, std:
 
 		switch (commandType) {
 		case 0:
-			generatedCmd = std::make_shared<PrintCommand>(pID, procName, "");
+			generatedCmd = std::make_shared<PrintCommand>(pID);
 			break;
 		case 1:
-			generatedCmd = std::make_shared<DeclareCommand>(pID, procName, randomVar1, randomVal);
+			generatedCmd = std::make_shared<DeclareCommand>(pID, randomVar1, randomVal);
 			break;
 		case 2:
-			generatedCmd = std::make_shared<MathCommand>(pID, procName, randomVar1, randomVar2, randomVal, CommandType::ADD);
+			generatedCmd = std::make_shared<MathCommand>(pID, randomVar1, randomVar2, randomVal, CommandType::ADD);
 			break;
 		case 3:
-			generatedCmd = std::make_shared<MathCommand>(pID, procName, randomVar1, randomVar2, randomVal, CommandType::SUBTRACT);
+			generatedCmd = std::make_shared<MathCommand>(pID, randomVar1, randomVar2, randomVal, CommandType::SUBTRACT);
 			break;
 		case 4:
-			generatedCmd = std::make_shared<SleepCommand>(pID, procName, static_cast<uint8_t>((rand() % 5) + 1));
+			generatedCmd = std::make_shared<SleepCommand>(pID, static_cast<uint8_t>((rand() % 5) + 1));
 			break;
 		case 5: {
 			// FOR LOOP
