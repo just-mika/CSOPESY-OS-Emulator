@@ -122,7 +122,6 @@ void MainConsole::handleCommand(const std::string& input) {
         {
             GlobalScheduler::getInstance()->generateReport();
             
-            // Print the success message exactly as requested
             std::cout << "Report generated at C:/csopesy-log.txt!\n";
         } 
         else 
