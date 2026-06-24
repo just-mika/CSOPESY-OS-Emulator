@@ -6,11 +6,11 @@
 #include <iostream>
 #include <filesystem> 
 
-//FOR DEBUGGING ONLY!!! this shouldn't be used in the final submission.W
+//FOR DEBUGGING ONLY!!! this shouldn't be used in the final submission.
 class FileLogger {
 private:
     // Centrally managed directory so everything matches perfectly
-    inline static const std::string DIRECTORY_PATH = "output/";
+    inline static const std::string DIRECTORY_PATH = "output/logs/";
 
     // Internal helper to handle directory safety quietly
     static void ensureDirectoryExists() {
