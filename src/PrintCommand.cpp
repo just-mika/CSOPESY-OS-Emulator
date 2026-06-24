@@ -10,30 +10,43 @@
 #include "SymbolTable.h"
 std::string convertPrimitiveToString(const PrimitiveValue& variantVal);
 
-PrintCommand::PrintCommand(int pid, std::string processName, std::string toPrint, std::string varName)
-	: ICommand(pid, CommandType::PRINT), processName(processName), toPrint(toPrint), variableName(varName)
+PrintCommand::PrintCommand(int pid)
+	: ICommand(pid, CommandType::PRINT)
 {
-	if (this->toPrint.empty() && this->variableName.empty()) {
-        this->toPrint = "Hello world from " + processName + "!";
-    }
+}
+
+PrintCommand::PrintCommand(int pid, std::string toPrint)
+	: ICommand(pid, CommandType::PRINT), toPrint(toPrint)
+{
+
+}
+
+PrintCommand::PrintCommand(int pid, std::string toPrint, std::string varName)
+	: ICommand(pid, CommandType::PRINT), toPrint(toPrint)
+{
 }
 
 void PrintCommand::execute()
 {
-	std::string finalOutput = toPrint;
+	auto process = GlobalScheduler::getInstance()->findProcess(pid);
+	if (!process) return;
 
-	if (!variableName.empty()) {
-		auto process = GlobalScheduler::getInstance()->findProcess(processName);
-		if (process) {
-			// 1. Fetch the variant from the symbol table
-			PrimitiveValue variantVal = process->getSymbolTable().getVariable(variableName);
+	std::string finalOutput = this->toPrint;
 
-			finalOutput += convertPrimitiveToString(variantVal);
+	if (finalOutput.empty() && this->varName.empty()) {
+		finalOutput = "Hello world from " + process->getName() + "!"; // 
+	}
+
+	if (!this->varName.empty()) {
+		PrimitiveValue liveVariable = process->getSymbolTable().getVariable(this->varName);
+
+		if (!std::holds_alternative<std::monostate>(liveVariable)) {
+			finalOutput += convertPrimitiveToString(liveVariable);
 		}
 	}
 
-	//for debugging purposes only.
-	FileLogger::logCommandExecution(this->processName, this->activeCoreID, finalOutput);
+	// For debugging purposes only
+	FileLogger::logCommandExecution(process->getName(), process->getCPUCoreID(), finalOutput);
 }
 
 std::string convertPrimitiveToString(const PrimitiveValue& variantVal)

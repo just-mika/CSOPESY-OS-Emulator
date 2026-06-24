@@ -12,7 +12,7 @@ enum class PrimitiveType
     FLOAT
 };
 
-typedef std::variant<uint16_t, char, float> PrimitiveValue;
+typedef std::variant<std::monostate, uint16_t, char, float> PrimitiveValue;
 
 struct Symbol
 {

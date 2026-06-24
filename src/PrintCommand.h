@@ -2,14 +2,16 @@
 #include <string>
 
 #include "ICommand.h"
+#include "SymbolTable.h"
 
 class PrintCommand : public ICommand
 {
 public:
-	PrintCommand(int pid, std::string processName, std::string toPrint, std::string varName = "");
+	PrintCommand(int pid, std::string toPrint, std::string varName);
+	PrintCommand(int pid);
+	PrintCommand(int pid, std::string toPrint);
 	void execute() override;
 private:
 	std::string toPrint;
-	std::string processName;
-	std::string variableName;
+	std::string varName;
 };
