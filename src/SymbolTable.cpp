@@ -7,13 +7,18 @@ void SymbolTable::setVariable(const std::string& name, PrimitiveType type, Primi
 	this->table[name] = s;
 }
 
-PrimitiveValue SymbolTable::getVariable(const std::string& name)
+Symbol SymbolTable::getVariable(const std::string& name)
 {
     if (this->table.find(name) != this->table.end())
     {
-        return this->table[name].value;
+        return this->table[name];
     }
-    return uint16_t(0);
+
+    Symbol defaultSymbol;
+    defaultSymbol.type = PrimitiveType::UINT16;
+    defaultSymbol.value = uint16_t(0);
+
+    return defaultSymbol;
 }
 
 bool SymbolTable::hasVariable(const std::string& name) const

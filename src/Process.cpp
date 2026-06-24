@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 
+#include "DeclareCommand.h"
 #include "FileLogger.h"
 #include "Windows.h"
 
@@ -19,13 +20,29 @@ Process::Process(int pid, std::string name)
 
 void Process::initializeCommands(int limit)
 {
-	//comment this 
+	//comment this in final submit
 	FileLogger::initializeProcessFile(this->name);
+
+	// 2. Pure instruction generation loop
 	for (int i = 1; i <= limit; ++i) {
-		std::string printText = "Hello world from " + this->name + "!";
-		std::shared_ptr<ICommand> printCmd = std::make_shared<PrintCommand>(this->pID, this->name, printText); // Pass the process
-		this->addCommand(printCmd); // Add the command to the process's command list
+
+		//GENERATE PRINTS
+		/*
+		std::shared_ptr<ICommand> generatedCmd = std::make_shared<PrintCommand>(this->pID); // Pass the process
+		this->addCommand(generatedCmd); // Add the command to the process's command list
 		Sleep(1);
+		this->addCommand(generatedCmd);*/
+
+		//GENERATE DECLARES
+		std::string varName = "v" + std::to_string(i);
+		uint16_t randomDefaultValue = static_cast<uint16_t>(rand() % 65536);
+		std::shared_ptr<ICommand> generatedCmd = std::make_shared<DeclareCommand>(
+			this->pID,
+			varName,
+			randomDefaultValue
+		);
+		Sleep(1);
+		this->addCommand(generatedCmd);
 	}
 }
 
@@ -73,8 +90,6 @@ void Process::nextInstruction()
 	}
 	if (commandCounter < static_cast<int>(commandList.size())) {
 		std::shared_ptr<ICommand> cmd = std::dynamic_pointer_cast<ICommand>(commandList[commandCounter]); // Current command being executed
-		if (cmd)
-			cmd->setCoreID(cpuCoreID);
 		commandList[commandCounter]->execute();
 		moveToNextLine();
 	}

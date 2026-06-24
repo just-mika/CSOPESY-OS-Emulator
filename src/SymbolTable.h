@@ -25,7 +25,7 @@ class SymbolTable
 public:
     void setVariable(const std::string& name, PrimitiveType type, PrimitiveValue value);
 
-    PrimitiveValue getVariable(const std::string& name);
+    Symbol getVariable(const std::string& name);
 
     bool hasVariable(const std::string& name) const;
 

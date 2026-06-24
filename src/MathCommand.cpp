@@ -15,7 +15,7 @@ uint16_t MathCommand::evaluateOperand(const Operand& op, std::shared_ptr<Process
     }
     else {
         std::string varName = std::get<std::string>(op);
-        PrimitiveValue val = process->getSymbolTable().getVariable(varName);
+        PrimitiveValue val = process->getSymbolTable().getVariable(varName).value;
         return std::get<uint16_t>(val);
     }
 }

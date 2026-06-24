@@ -6,11 +6,10 @@
 class DeclareCommand : public ICommand
 {
 public:
-    DeclareCommand(int pid, std::string processName, std::string varName, uint16_t defaultValue);
+    DeclareCommand(int pid, std::string varName, uint16_t defaultValue);
     void execute() override;
 
 private:
-    std::string processName;
     std::string varName;
     uint16_t defaultValue;
 };
