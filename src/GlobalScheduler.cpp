@@ -1,6 +1,7 @@
 #include "GlobalScheduler.h"
 #include <iostream>
 #include <iomanip> // for std::setw and std::left
+#include <fstream>
 
 #include "CPUWorker.h"
 
