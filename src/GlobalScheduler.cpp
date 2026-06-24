@@ -5,6 +5,7 @@
 
 #include "CPUWorker.h"
 
+class ForCommand;
 GlobalScheduler* GlobalScheduler::sharedInstance = nullptr;
 
 GlobalScheduler::GlobalScheduler(Config config)
@@ -72,7 +73,6 @@ void GlobalScheduler::runRR()
 				{
 					//pause process (change state from RUNNING to READY)
 					process->pauseProcess();
-					process->setCPUCoreID(-1);
 
 					std::unique_lock lock(mutex);
 
@@ -135,7 +135,6 @@ void GlobalScheduler::updateWorkers()
 		}
 		//handle WAITING state (triggered by SLEEP(X))
 		else if (currentProc->getState() == ProcessState::WAITING) {
-			currentProc->setCPUCoreID(-1);
 			currentProc->resetCyclesInCPU(); // Reset counter for clean tracking
 
 			std::unique_lock lock(mutex);
@@ -234,7 +233,6 @@ void GlobalScheduler::setGenerating(bool generating)
 	generateProcesses = generating;
 }
 
-
 std::shared_ptr<Process> GlobalScheduler::generateProcess()
 {
 	std::string processName = "process_";
@@ -324,4 +322,9 @@ void GlobalScheduler::generateReport()
 
     outFile << "--------------------------------------------------\n";
     outFile.close();
+}
+
+bool GlobalScheduler::hasStarted()
+{
+	return generateProcesses;
 }
