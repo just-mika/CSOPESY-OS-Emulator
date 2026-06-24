@@ -118,8 +118,17 @@ void MainConsole::handleCommand(const std::string& input) {
         }
     }
     else if (command == "report-util") {
-    	std::cout << command << " command recognized. Doing something.\n";
-            //std::cout << "Report generated at C:<filepath>/output/csopesy-log.txt!\n";
+        if (GlobalScheduler::getInstance() != nullptr) 
+        {
+            GlobalScheduler::getInstance()->generateReport();
+            
+            // Print the success message exactly as requested
+            std::cout << "Report generated at C:/csopesy-log.txt!\n";
+        } 
+        else 
+        {
+            std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
+        }
     }
     else std::cout << "Unknown command: " << input << std::endl;
 }
@@ -162,7 +171,6 @@ void printHeader()
 
 void MainConsole::displayScreenLS() const
 {
-    // 1. Fetch workers and calculate CPU utilization
     auto workers = GlobalScheduler::getInstance()->getWorkers();
     int activeCores = 0;
     int totalCores = workers.size();
@@ -177,13 +185,11 @@ void MainConsole::displayScreenLS() const
     
     int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
 
-    // 2. Print the CPU Statistics
     std::cout << "CPU Utilization: " << cpuUtil << "%\n";
     std::cout << "Cores used: " << activeCores << "\n";
     std::cout << "Cores available: " << (totalCores - activeCores) << "\n";
     std::cout << "\n--------------------------------------------------\n";
     
-    // 3. Print Running Processes
     std::cout << "Running processes:\n";
 
     typedef std::deque<std::shared_ptr<Process>> Queue;
@@ -200,7 +206,6 @@ void MainConsole::displayScreenLS() const
     }
     else std::cout << "No running processes\n";
 
-    // 4. Print Finished Processes
     Queue finishedProcesses = GlobalScheduler::getInstance()->getFinishedProcesses();
     std::cout << "\nFinished processes:\n";
     
