@@ -262,3 +262,67 @@ void GlobalScheduler::printConfig() {
 	std::cout << "delay-per-exec: " << delaysPerExec << std::endl;
 	std::cout << "++++++++++++++++++++++++++++++++\n";
 }
+void GlobalScheduler::generateReport() 
+{
+    std::ofstream outFile("csopesy-log.txt");
+    if (!outFile.is_open()) 
+    {
+        std::cout << "Error: Unable to generate csopesy-log.txt\n";
+        return;
+    }
+
+    // 1. Calculate CPU Utilization
+    int activeCores = 0;
+    for (const auto& worker : workers) 
+    {
+        if (!worker->isFree()) 
+        {
+            activeCores++;
+        }
+    }
+    
+    int totalCores = workers.size();
+    int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
+
+    outFile << "CPU Utilization: " << cpuUtil << "%\n";
+    outFile << "Cores used: " << activeCores << "\n";
+    outFile << "Cores available: " << totalCores - activeCores << "\n";
+    outFile << "\n--------------------------------------------------\n";
+    
+    outFile << "Running processes:\n";
+    auto running = this->getRunningProcesses();
+    if (!running.empty()) 
+    {
+        for (const auto& p : running) 
+        {
+            outFile << std::left << std::setw(15) << p->getName()
+                    << "(" << p->getFormattedCreationTime() << ")    "
+                    << "Core: " << std::setw(5) << p->getCPUCoreID()
+                    << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
+        }
+    } 
+    else 
+    {
+        outFile << "No running processes\n";
+    }
+
+    outFile << "\nFinished processes:\n";
+    auto finished = this->getFinishedProcesses();
+    if (!finished.empty()) 
+    {
+        for (const auto& p : finished) 
+        {
+            outFile << std::left << std::setw(15) << p->getName()
+                    << "(" << p->getFormattedCreationTime() << ")    "
+                    << std::setw(12) << "Finished"
+                    << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
+        }
+    } 
+    else 
+    {
+        outFile << "No finished processes\n";
+    }
+
+    outFile << "--------------------------------------------------\n";
+    outFile.close();
+}
