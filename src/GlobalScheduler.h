@@ -35,4 +35,5 @@ private:
     void runFCFS();
     void runRR();
     void updateWorkers();
+    void updateWaitingProcesses();
 };

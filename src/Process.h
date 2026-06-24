@@ -42,6 +42,7 @@ class Process
 		void incrementCyclesInCPU();
 		void resetCyclesInCPU();
 		int getCyclesInCPU() const;
+		void decrementSleepTicks();
 
 		// Getters
 		bool isFinished() const;

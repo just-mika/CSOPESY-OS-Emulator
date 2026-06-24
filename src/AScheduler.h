@@ -48,5 +48,6 @@ protected:
     std::deque<std::shared_ptr<Process>> readyQueue;
     std::deque<std::shared_ptr<Process>> finishedProcesses;
     std::deque<std::shared_ptr<Process>> runningProcesses;
+    std::list<std::shared_ptr<Process>> waitingProcesses;
     std::unordered_map<int, std::shared_ptr<Process>> processTable;
 };

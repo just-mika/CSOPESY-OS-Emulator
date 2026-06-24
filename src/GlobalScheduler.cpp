@@ -14,7 +14,6 @@ GlobalScheduler::GlobalScheduler(Config config)
 		workers.push_back(std::make_shared<CPUWorker>(i));
 	}
 }
-
 void GlobalScheduler::run()
 {
 	running = true;
@@ -26,6 +25,7 @@ void GlobalScheduler::run()
 		//check workers if current process is finished executing & update accordingly
 		//also updates the queue
 		updateWorkers();
+		updateWaitingProcesses();
 
 		if (algo == SchedulingAlgorithm::FCFS)
 		{
@@ -132,10 +132,48 @@ void GlobalScheduler::updateWorkers()
 			lock.unlock();
 			worker->assignProcess(nullptr); // Free the worker
 		}
+		//handle WAITING state (triggered by SLEEP(X))
+		else if (currentProc->getState() == ProcessState::WAITING) {
+			currentProc->setCPUCoreID(-1);
+			currentProc->resetCyclesInCPU(); // Reset counter for clean tracking
+
+			std::unique_lock lock(mutex);
+			waitingProcesses.push_back(currentProc); // Move to sleeping track
+
+			auto it = std::find(runningProcesses.begin(), runningProcesses.end(), currentProc);
+			if (it != runningProcesses.end()) {
+				runningProcesses.erase(it);
+			}
+			lock.unlock();
+			worker->assignProcess(nullptr);
+		}
 		else {
 			worker->getCurrentProcess()->incrementCyclesInCPU();
 		}
 	}
+}
+
+void GlobalScheduler::updateWaitingProcesses()
+{
+	std::unique_lock lock(mutex);
+	for (auto it = waitingProcesses.begin(); it != waitingProcesses.end(); ) {
+		auto process = *it;
+
+		// 1. Decrement the sleep timer by 1 tick
+		process->decrementSleepTicks();
+
+		// 2. Check if it's time to wake up
+		if (process->getRemainingSleepTicks() <= 0) {
+			readyQueue.push_back(process);
+
+			// Remove it from the sleeping list safely mid-iteration
+			it = waitingProcesses.erase(it);
+		}
+		else {
+			++it; // Move to the next sleeping process
+		}
+	}
+	lock.unlock();
 }
 
 GlobalScheduler* GlobalScheduler::getInstance()
