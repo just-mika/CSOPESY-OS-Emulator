@@ -82,14 +82,12 @@ void MainConsole::handleCommand(const std::string& input) {
             }
             else {
                 auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
-                if (process != nullptr) {
-                    auto screen = std::make_shared<BaseScreen>(process, args[1]);
-                    ConsoleManager::getInstance()->registerScreen(screen);
-                    ConsoleManager::getInstance()->switchToScreen(screen->getName());
+                if (process == nullptr) {
+                    process = GlobalScheduler::getInstance()->createUniqueProcess(args[1]);
                 }
-                else {
-                    std::cout << "Screen attach failed. Process " << args[1] << " not found.";
-                }
+                auto screen = std::make_shared<BaseScreen>(process, args[1]);
+                ConsoleManager::getInstance()->registerScreen(screen);
+                ConsoleManager::getInstance()->switchToScreen(screen->getName());
              } 
         }
         else if (args[0] == "-r") {

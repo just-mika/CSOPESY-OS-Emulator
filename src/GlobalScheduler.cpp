@@ -6,6 +6,7 @@
 #include "CPUWorker.h"
 
 GlobalScheduler* GlobalScheduler::sharedInstance = nullptr;
+static int pidCounter = 0;
 
 GlobalScheduler::GlobalScheduler(Config config)
 	: AScheduler(config)
@@ -207,8 +208,9 @@ void GlobalScheduler::destroy()
 
 std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name)
 {
-	static int pidCounter = 0;
-	auto process = std::make_shared<Process>(pidCounter++, name);
+	auto process = std::make_shared<Process>(++nextPID, name);
+	int totalCommands = (rand() % (maxIns - minIns + 1)) + minIns;
+	process->initializeCommands(totalCommands);
 	addProcess(process);
 	return process;
 }
