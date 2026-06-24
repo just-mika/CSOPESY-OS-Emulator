@@ -6,10 +6,9 @@
 class SleepCommand : public ICommand
 {
 public:
-    SleepCommand(int pid, std::string processName, uint8_t ticksToSleep);
+    SleepCommand(int pid, uint8_t ticksToSleep);
     void execute() override;
 
 private:
-    std::string processName;
     uint8_t ticksToSleep;
 };

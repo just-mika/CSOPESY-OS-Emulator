@@ -18,7 +18,6 @@ PrintCommand::PrintCommand(int pid)
 PrintCommand::PrintCommand(int pid, std::string toPrint)
 	: ICommand(pid, CommandType::PRINT), toPrint(toPrint)
 {
-
 }
 
 PrintCommand::PrintCommand(int pid, std::string toPrint, std::string varName)
