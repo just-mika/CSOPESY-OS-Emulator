@@ -6,6 +6,15 @@
 #include "ICommand.h"
 #include "SymbolTable.h"
 #include <ctime>
+#include <stack>
+
+struct LoopFrame {
+	int forIndex;
+	int bodyStart;
+	int bodyEnd;
+	int repeats;
+	int currentIteration;
+};
 
 enum ProcessState {
 	READY,
@@ -32,11 +41,11 @@ class Process
 		int cyclesInCPU = 0;
 		std::shared_ptr<std::vector<std::string>> printLogs; 
 		void saveLog(std::string printedString);
+		std::stack<LoopFrame> loopStack;
 
 	public:
 		Process(int pid, std::string name);
 		void addCommand(std::shared_ptr<ICommand> command);
-		void moveToNextLine();
 		void nextInstruction();
 		void initializeCommands(int limit);
 		void pauseProcess();

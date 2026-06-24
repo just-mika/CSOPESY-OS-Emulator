@@ -21,25 +21,25 @@ ForCommand::ForCommand(int pid, std::vector<std::shared_ptr<ICommand>> loopInstr
         }
     }
 
-	// This loop + inner loops
+    // This loop + inner loops
     this->depth = maxInnerDepth + 1;
 
     if (this->depth > 3) {
-		std::cerr << "ERROR: For loop nesting exceeds the maximum limit of 3!" << std::endl; // Print an error message if the nesting depth exceeds 3
+        std::cerr << "ERROR: For loop nesting exceeds the maximum limit of 3!" << std::endl; // Print an error message if the nesting depth exceeds 3
     }
 }
 
+// For loop logic is handled in Process::nextInstruction()
 void ForCommand::execute()
 {
-	// Execute the loop instructions for the specified number of repeats
-    for (int i = 0; i < repeats; ++i) {
-        for (const auto& command : loopInstructions) {
-            command->execute();
-        }
-    }
 }
 
 int ForCommand::getNestingDepth() const
 {
     return this->depth;
+}
+
+void ForCommand::setBodyRange(int start, int end) {
+    bodyStart = start;
+    bodyEnd = end;
 }

@@ -1,4 +1,6 @@
 #include "SleepCommand.h"
+
+#include "FileLogger.h"
 #include "GlobalScheduler.h"
 #include "Process.h"
 
@@ -15,4 +17,7 @@ void SleepCommand::execute()
 		process->setRemainingSleepTicks(this->ticksToSleep);    // Set the remaining sleep ticks for the process
 		process->sleepProcess();                                // Change the process state to WAITING
     }
+
+    // For debugging purposes only
+    //FileLogger::logCommandExecution(process->getName(), process->getCPUCoreID(), "SLEEP for " + std::to_string(ticksToSleep));
 }

@@ -15,6 +15,7 @@ public:
     bool isFree() const;
     void update(bool isRunning);
     void run() override;
+    int getCoreID();
 
 private:
     int coreID;

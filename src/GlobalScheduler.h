@@ -17,6 +17,7 @@ public:
     void setGenerating(bool generating);
     void printConfig();
     bool isInitialized();
+    bool hasStarted();
 
     friend class CPUWorker;
 

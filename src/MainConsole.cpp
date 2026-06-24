@@ -116,8 +116,14 @@ void MainConsole::handleCommand(const std::string& input) {
             std::cout << "Config not initialized yet.\n";
         }
         else {
-            GlobalScheduler::getInstance()->setGenerating(true);
-            std::cout << "Scheduler started.\n";
+            if (GlobalScheduler::getInstance()->hasStarted())
+                std::cout << "Scheduler is already running\n";
+            else {
+                GlobalScheduler::getInstance()->setGenerating(true);
+                if (GlobalScheduler::getInstance()->hasStarted())
+                    std::cout << "Scheduler started.\n";
+                else std::cout << "Error starting scheduler. \n";
+            }
         }
     }
     else if (command == "scheduler-stop") {
@@ -126,8 +132,14 @@ void MainConsole::handleCommand(const std::string& input) {
         }
         else
         {
-            GlobalScheduler::getInstance()->setGenerating(false);
-            std::cout << "Scheduler stopped. \n";
+            if (!GlobalScheduler::getInstance()->hasStarted())
+                std::cout << "Scheduler already stopped\n";
+            else {
+                GlobalScheduler::getInstance()->setGenerating(false);
+                if (!GlobalScheduler::getInstance()->hasStarted())
+                    std::cout << "Scheduler is already not running. \n";
+                else std::cout << "Error stopping scheduler. \n";
+            }
         }
     }
     else if (command == "report-util") {

@@ -74,10 +74,11 @@ static std::vector<std::shared_ptr<ICommand>> generateCommandBlock(int pID, std:
 	return block;
 }
 
+
 void Process::initializeCommands(int limit)
 {
 	//comment this in final submit
-	FileLogger::initializeProcessFile(this->name);
+	//FileLogger::initializeProcessFile(this->name);
 
 	// Call helper function to create a list of commands
 	std::vector<std::shared_ptr<ICommand>> initialCommands = generateCommandBlock(this->pID, this->name, limit, 1); // Add 1 for command loop depth
@@ -99,39 +100,51 @@ std::string static formatTime(time_t timeToFormat) {
 		ss << std::put_time(&tm_struct, "%m/%d/%Y %I:%M:%S%p");
 		return ss.str();
 }
-
 std::string Process::getCreatedTime() const {
 	return formatTime(this->creationTime);
 }
 void Process::addCommand(std::shared_ptr<ICommand> command)
 {
 	if (command != nullptr) {
-		commandList.push_back(command);
+
+		/** ADDING A FOR LOOP COMMAND
+		 *   This converts a tree-like nested loop structure into a flat, sequential array to be added in the commandList
+		 *   while preserving the original code layout.
+		 *   
+		 *   This allows 'nextInstruction()' to know exactly where a loop starts, where it ends,
+		 *   and where to jump, without ever duplicating lines or expanding iterations in memory.
+		 */
+
+		if (command->getCommandType() == CommandType::FOR) {
+			auto forCmd = std::dynamic_pointer_cast<ForCommand>(command);
+
+			int forIndex = commandList.size(); //capture current index of the for loop.
+			commandList.push_back(forCmd); // Add the FOR header itself into the sequence
+
+			// The loop body starts immediately at the next available index
+			int bodyStart = commandList.size();
+
+			// Recurse through the loop body to flatten its inner instructions
+			for (const auto& inner : forCmd->loopInstructions) {
+				addCommand(inner);
+			}
+
+			// Capture the index of last instruction belonging to this loop's body
+			int bodyEnd = commandList.size() - 1;
+
+			// Save the indexes of start and end instructions inside the ForCommand to be added.
+			forCmd->setBodyRange(bodyStart, bodyEnd);
+		}
+		else {
+			// Base commands (PRINT, MATH, SLEEP, DECLARE) are pushed sequentially into the layout
+			commandList.push_back(command);
+		}
 	}
 }
 
-void Process::moveToNextLine()
-{
-	commandCounter++;
-	if (commandCounter >= static_cast<int>(commandList.size())) {
-		currentState = FINISHED;
-	}
-}
+void Process::nextInstruction() {
+	if (isFinished() || commandList.empty()) return;
 
-void Process::saveLog(std::string printedString) {
-	time_t nowT = std::time(nullptr);
-	std::string toSave = "(" + formatTime(nowT) + ")  ";
-	toSave += "Core: " + std::to_string(cpuCoreID) + " " + printedString;
-	printLogs->push_back(toSave);
-}
-std::shared_ptr<std::vector<std::string>> Process::getPrintLogs() const{
-	return printLogs;
-}
-void Process::nextInstruction()
-{
-	if (isFinished() || commandList.empty()) {
-		return;
-	}
 	if (commandCounter == 0) {
 		execDT = std::chrono::system_clock::now();
 		currentState = RUNNING;
