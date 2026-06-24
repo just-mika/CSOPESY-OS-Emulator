@@ -17,18 +17,34 @@ AScheduler::AScheduler(Config config)
 
 void AScheduler::addProcess(std::shared_ptr<Process> process) {
     std::unique_lock lock(mutex);
+    processTable[process->getPID()] = process;
     readyQueue.push_back(process);
     lock.unlock();
 }
 
 std::shared_ptr<Process> AScheduler::findProcess(const std::string& processName) {
     std::shared_lock lock(mutex);
-    for (auto& process : readyQueue) {
+    for (int i = 0; i < processTable.size(); i++) {
+        auto process = processTable[i];
         if (process->getName() == processName)
             return process;
     }
 	lock.unlock();
     return nullptr;
+}
+
+std::shared_ptr<Process> AScheduler::findProcess(int pid) {
+    std::shared_lock lock(mutex);
+    auto it = processTable.find(pid);
+    if (it != processTable.end()) {
+        return it->second;
+    }
+    lock.unlock();
+    return nullptr; 
+}
+
+void AScheduler::removeProcess(int pid) {
+    processTable.erase(pid);
 }
 
 void AScheduler::run() {

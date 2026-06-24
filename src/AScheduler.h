@@ -28,6 +28,8 @@ public:
     static SchedulingAlgorithm parseAlgorithm(std::string algo);
     std::deque<std::shared_ptr<Process>> getFinishedProcesses();
     std::deque<std::shared_ptr<Process>> getRunningProcesses();
+    std::shared_ptr<Process> findProcess(int pid);
+    void removeProcess(int pid);
 
 protected:
     SchedulingAlgorithm algo;
@@ -46,4 +48,5 @@ protected:
     std::deque<std::shared_ptr<Process>> readyQueue;
     std::deque<std::shared_ptr<Process>> finishedProcesses;
     std::deque<std::shared_ptr<Process>> runningProcesses;
+    std::unordered_map<int, std::shared_ptr<Process>> processTable;
 };
