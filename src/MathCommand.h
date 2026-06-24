@@ -12,11 +12,10 @@ using Operand = std::variant<std::string, uint16_t>;
 class MathCommand : public ICommand
 {
 public:
-    MathCommand(int pid, std::string processName, std::string targetVar, Operand op1, Operand op2, CommandType operation);
+    MathCommand(int pid, std::string targetVar, Operand op1, Operand op2, CommandType operation);
     void execute() override;
 
 private:
-    std::string processName;
     std::string targetVar;
     Operand op1;
     Operand op2;

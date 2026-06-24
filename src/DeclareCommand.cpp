@@ -12,7 +12,7 @@ DeclareCommand::DeclareCommand(int pid, std::string varName, uint16_t defaultVal
 void DeclareCommand::execute()
 {
     std::shared_ptr<Process> process = GlobalScheduler::getInstance()->findProcess(pid);
-    std::string finalOutput;
+    
 
     if (!process) return;
 
@@ -22,8 +22,8 @@ void DeclareCommand::execute()
     Symbol var = process->getSymbolTable().getVariable(this->varName);
 
     // for debugging purposes only
-    finalOutput = "Declared UINT16 " + varName + " = " + convertPrimitiveToString(var.value);
+    //std::string finalOutput = "Declared " + varName + " = " + convertPrimitiveToString(var.value);
 
     // for debugging purposes only
-    FileLogger::logCommandExecution(process->getName(), process->getCPUCoreID(), finalOutput);
+    //FileLogger::logCommandExecution(process->getName(), process->getCPUCoreID(), finalOutput);
 }

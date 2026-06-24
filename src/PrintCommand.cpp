@@ -22,7 +22,7 @@ PrintCommand::PrintCommand(int pid, std::string toPrint)
 }
 
 PrintCommand::PrintCommand(int pid, std::string toPrint, std::string varName)
-	: ICommand(pid, CommandType::PRINT), toPrint(toPrint)
+	: ICommand(pid, CommandType::PRINT), toPrint(toPrint), varName(varName)
 {
 }
 
@@ -42,6 +42,9 @@ void PrintCommand::execute()
 
 		if (!std::holds_alternative<std::monostate>(liveVariable)) {
 			finalOutput += convertPrimitiveToString(liveVariable);
+		}
+		else {
+			finalOutput += "[UNINITIALIZED/NULL VAR]";
 		}
 	}
 
