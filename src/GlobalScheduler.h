@@ -13,7 +13,7 @@ public:
     static void init(Config config);
     std::shared_ptr<Process> createUniqueProcess(std::string name);
     std::vector<std::shared_ptr<CPUWorker>> getWorkers();
-    //bool generateReport();
+    void generateReport();
     void setGenerating(bool generating);
     void printConfig();
     bool isInitialized();
