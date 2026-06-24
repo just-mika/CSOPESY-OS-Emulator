@@ -162,28 +162,48 @@ void printHeader()
 
 void MainConsole::displayScreenLS() const
 {
-    std::cout << "--------------------------------------------------\n";
+    // 1. Fetch workers and calculate CPU utilization
+    auto workers = GlobalScheduler::getInstance()->getWorkers();
+    int activeCores = 0;
+    int totalCores = workers.size();
+
+    for (const auto& worker : workers) 
+    {
+        if (!worker->isFree()) 
+        {
+            activeCores++;
+        }
+    }
+    
+    int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
+
+    // 2. Print the CPU Statistics
+    std::cout << "CPU Utilization: " << cpuUtil << "%\n";
+    std::cout << "Cores used: " << activeCores << "\n";
+    std::cout << "Cores available: " << (totalCores - activeCores) << "\n";
+    std::cout << "\n--------------------------------------------------\n";
+    
+    // 3. Print Running Processes
     std::cout << "Running processes:\n";
 
     typedef std::deque<std::shared_ptr<Process>> Queue;
-    // Loop through CPU workers to find actively executing processes
-
     Queue runningProcesses = GlobalScheduler::getInstance()->getRunningProcesses();
 
     if (!runningProcesses.empty())
     {
         for (const auto& p : runningProcesses){
-            //Reference: https://en.cppreference.com/cpp/io/manip/left
             std::cout << std::left << std::setw(15) << p->getName()
                 << "(" << p->getFormattedCreationTime() << ")    "
                 << "Core: " << std::setw(5) << p->getCPUCoreID()
                 << p->getCommandCounter() << " / " << p->getLinesOfCode() << "\n";
         }
     }
-	else std::cout << "No running processes\n";
+    else std::cout << "No running processes\n";
 
+    // 4. Print Finished Processes
     Queue finishedProcesses = GlobalScheduler::getInstance()->getFinishedProcesses();
     std::cout << "\nFinished processes:\n";
+    
     if (!finishedProcesses.empty()) {
         for (const auto& p : finishedProcesses)
         {
@@ -194,5 +214,6 @@ void MainConsole::displayScreenLS() const
         }
     }
     else std::cout << "No finished processes\n";
+    
     std::cout << "--------------------------------------------------\n";
 }
