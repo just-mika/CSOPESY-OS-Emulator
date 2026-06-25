@@ -77,34 +77,43 @@ void MainConsole::handleCommand(const std::string& input) {
         }
         else if (args[0] == "-s")
         {
-            if (args[1] == "") {
-                std::cout << "Please enter the process name.\n";
-            }
-            else {
-                auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
-                if (process == nullptr) {
-                    process = GlobalScheduler::getInstance()->createUniqueProcess(args[1]);
+            if (GlobalScheduler::getInstance() != nullptr) {
+                if (args[1] == "") {
+                    std::cout << "Please enter the process name.\n";
                 }
-                auto screen = std::make_shared<BaseScreen>(process, args[1]);
-                ConsoleManager::getInstance()->registerScreen(screen);
-                ConsoleManager::getInstance()->switchToScreen(screen->getName());
-             } 
-        }
-        else if (args[0] == "-r") {
-            if (args[1] == "") {
-                std::cout << "Please enter the process name.\n";
-            }
-            else {
-                auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
-                if (process != nullptr && process->getState() != ProcessState::FINISHED) {
-                    OSThread::sleep(100);
+                else {
+                    auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
+                    if (process == nullptr) {
+                        process = GlobalScheduler::getInstance()->createUniqueProcess(args[1]);
+                    }
                     auto screen = std::make_shared<BaseScreen>(process, args[1]);
                     ConsoleManager::getInstance()->registerScreen(screen);
                     ConsoleManager::getInstance()->switchToScreen(screen->getName());
+                } 
+            } else{
+                std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
+            }
+        }
+        else if (args[0] == "-r") {
+            if (GlobalScheduler::getInstance() != nullptr) {
+                if (args[1] == "") {
+                    std::cout << "Please enter the process name.\n";
                 }
                 else {
-                    std::cout << "Screen attach failed. Process " << args[1] << " not found.";
+                    auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
+                    if (process != nullptr && process->getState() != ProcessState::FINISHED) {
+                        OSThread::sleep(100);
+                        auto screen = std::make_shared<BaseScreen>(process, args[1]);
+                        ConsoleManager::getInstance()->registerScreen(screen);
+                        ConsoleManager::getInstance()->switchToScreen(screen->getName());
+                    }
+                    else {
+                        std::cout << "Screen attach failed. Process " << args[1] << " not found.";
+                    }
                 }
+            }
+            else{
+                std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
             }
         }
         else {
