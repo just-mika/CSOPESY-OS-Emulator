@@ -58,6 +58,6 @@ void PrintCommand::execute()
 	processStringToPrint();
 
 	// For debugging purposes only
-	FileLogger::logCommandExecution(process->getName(), process->getCPUCoreID(), this->toPrint);
+	//FileLogger::logCommandExecution(process->getName(), process->getCPUCoreID(), this->toPrint);
 }
 
