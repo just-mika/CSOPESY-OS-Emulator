@@ -15,5 +15,5 @@ public:
 private:
 	std::string toPrint;
 	std::string varName;
-	void processStringToPrint();
+	std::string processStringToPrint();
 };
