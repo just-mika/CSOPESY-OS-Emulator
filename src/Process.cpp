@@ -74,7 +74,41 @@ static std::vector<std::shared_ptr<ICommand>> generateCommandBlock(int pID, std:
 	return block;
 }
 
+static std::vector<std::shared_ptr<ICommand>> demoCase(
+	int pID,
+	std::string procName,
+	int numCmds,
+	int currentDepth)
+{
+	std::vector<std::shared_ptr<ICommand>> block;
 
+	// Initialize variables
+	block.push_back(std::make_shared<DeclareCommand>(pID, "one", 1));
+	block.push_back(std::make_shared<DeclareCommand>(pID, "x", 0));
+	block.push_back(std::make_shared<DeclareCommand>(pID, "y", 0));
+	block.push_back(std::make_shared<DeclareCommand>(pID, "z", 0));
+
+	std::vector<std::shared_ptr<ICommand>> loopBlock;
+
+	loopBlock.push_back(std::make_shared<MathCommand>(
+		pID, "x", "x", "one", CommandType::ADD));
+	loopBlock.push_back(std::make_shared<PrintCommand>(
+		pID, "value from x: ", "x"));
+
+	loopBlock.push_back(std::make_shared<MathCommand>(
+		pID, "y", "y", "one", CommandType::ADD));
+	loopBlock.push_back(std::make_shared<PrintCommand>(
+		pID, "value from y: ", "y"));
+
+	loopBlock.push_back(std::make_shared<MathCommand>(
+		pID, "z", "z", "one", CommandType::ADD));
+	loopBlock.push_back(std::make_shared<PrintCommand>(
+		pID, "value from z: ", "z"));
+
+	block.push_back(std::make_shared<ForCommand>(pID, loopBlock, 100));
+
+	return block;
+} 
 void Process::initializeCommands(int limit)
 {
 	//comment this in final submit
@@ -82,6 +116,8 @@ void Process::initializeCommands(int limit)
 
 	// Call helper function to create a list of commands
 	std::vector<std::shared_ptr<ICommand>> initialCommands = generateCommandBlock(this->pID, this->name, limit, 1); // Add 1 for command loop depth
+		//demoCase(this->pID, this->name, limit, 1);
+		//
 
 	// Add them all to the process
 	for (const auto& cmd : initialCommands) {
@@ -162,12 +198,7 @@ void Process::nextInstruction() {
 
 	if (commandCounter < commandList.size()) {
 		auto& cmd = commandList[commandCounter];
-		if (cmd->getCommandType() == CommandType::PRINT) {
-			auto printCmd = std::dynamic_pointer_cast<PrintCommand>(cmd);
-			if (printCmd) {
-				saveLog(printCmd->getToPrint());
-			}
-		}
+
 		// PROCESSING A FOR LOOP COMMAND
 		/*
 		 *  Instead of executing nested FOR loops instantly in a single clock cycle (which would block the CPU
@@ -213,6 +244,12 @@ void Process::nextInstruction() {
 		}
 		else {
 			cmd->execute();
+			if (cmd->getCommandType() == CommandType::PRINT) {
+				auto printCmd = std::dynamic_pointer_cast<PrintCommand>(cmd);
+				if (printCmd) {
+					saveLog(printCmd->getToPrint());
+				}
+			}
 			commandCounter++;
 
 			// Check if we just walked past the end line of our active loop body.

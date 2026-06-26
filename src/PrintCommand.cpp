@@ -47,7 +47,6 @@ void PrintCommand::processStringToPrint() {
 }
 
 std::string PrintCommand::getToPrint() {
-	processStringToPrint();
 	return toPrint;
 }
 void PrintCommand::execute()
