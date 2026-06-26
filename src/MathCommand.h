@@ -1,4 +1,5 @@
 #pragma once
+#include "Process.h"
 #include "ICommand.h"
 #include <string>
 #include <variant>
