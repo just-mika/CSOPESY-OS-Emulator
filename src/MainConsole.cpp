@@ -146,7 +146,7 @@ void MainConsole::handleCommand(const std::string& input) {
             else {
                 GlobalScheduler::getInstance()->setGenerating(false);
                 if (!GlobalScheduler::getInstance()->hasStarted())
-                    std::cout << "Scheduler is already not running. \n";
+                    std::cout << "Scheduler stopped. \n";
                 else std::cout << "Error stopping scheduler. \n";
             }
         }
