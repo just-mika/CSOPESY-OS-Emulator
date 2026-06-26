@@ -94,7 +94,7 @@ void GlobalScheduler::runRR()
 		}
 
 		//if the current worker (could be the currently preempted one) is free, add a new process
-		if (worker->isFree() && !readyQueue.empty())
+		else if (!readyQueue.empty())
 		{
 			std::unique_lock lock(mutex);
 
