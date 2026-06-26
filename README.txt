@@ -6,6 +6,9 @@ CSOPESY OS Emulator
 - Filipino, Eunice 
 - Wee, Justine
 
+Entry Class File:
+The main function is located in `main.cpp`.
+
 Running the Program
 1. Open the solution file (`.slnx`) in Visual Studio.
 2. Set the build configuration to Debug or Release.
