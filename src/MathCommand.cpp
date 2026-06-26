@@ -12,15 +12,22 @@ MathCommand::MathCommand(int pid, std::string targetVar, Operand op1, Operand op
 
 uint16_t MathCommand::evaluateOperand(const Operand& op, std::shared_ptr<Process> process)
 {
-	if (std::holds_alternative<uint16_t>(op)) { // If the operand is a uint16_t, return its value directly
+    if (std::holds_alternative<uint16_t>(op)) {
         return std::get<uint16_t>(op);
     }
     else {
         std::string varName = std::get<std::string>(op);
         PrimitiveValue val = process->getSymbolTable().getVariable(varName).value;
+
+        if (!std::holds_alternative<uint16_t>(val)) {
+            process->getSymbolTable().setVariable(varName, PrimitiveType::UINT16, static_cast<uint16_t>(0));
+            val = process->getSymbolTable().getVariable(varName).value;
+        }
+
         return std::get<uint16_t>(val);
     }
 }
+
 void MathCommand::execute()
 {
     std::shared_ptr<Process> process = GlobalScheduler::getInstance()->findProcess(pid);
