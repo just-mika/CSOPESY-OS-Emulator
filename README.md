@@ -10,4 +10,4 @@
 1. Open the solution file (`.slnx`) in Visual Studio.
 2. Set the build configuration to **Debug** or **Release**.
 3. Ensure `main.cpp` is set as the startup file.
-4. Press **F5** to build and run, or go to **Debug > Start Debugging**.
+4. Press **Local Windows Debugger** to build and run the program.
