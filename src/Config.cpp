@@ -43,6 +43,15 @@ bool loadConfig(std::string filename, Config& config) {
 
 		else if (key == "delay-per-exec")
 			config.delaysPerExec = std::stoull(value);
+			
+		else if (key == "max-overall-mem")
+			config.maxOverallMem = std::stoull(value);
+
+		else if (key == "mem-per-frame")
+			config.memPerFrame = std::stoull(value);
+
+		else if (key == "mem-per-proc")
+			config.memPerProc = std::stoull(value);
 	}
 
 	file.close();
@@ -87,6 +96,21 @@ bool validateConfig(Config config) {
 
 	if ((config.maxIns < config.minIns)) {
 		std::cout << "min-in value is greater than max-in value\n";
+		return false;
+	}
+
+	if (config.maxOverallMem < 1 || config.maxOverallMem > MAX_RANGE) {
+		std::cout << "Invalid max-overall-mem value\n";
+		return false;
+	}
+
+	if (config.memPerFrame < 1 || config.memPerFrame > MAX_RANGE) {
+		std::cout << "Invalid mem-per-frame value\n";
+		return false;
+	}
+
+	if (config.memPerProc < 1 || config.memPerProc > MAX_RANGE) {
+		std::cout << "Invalid mem-per-proc value\n";
 		return false;
 	}
 
