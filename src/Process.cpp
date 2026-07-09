@@ -267,6 +267,10 @@ void Process::nextInstruction() {
 	}
 }
 
+size_t Process::getMemoryRequired() const {
+    return this->memoryRequired;
+}
+
 void* Process::getMemoryAddress() const {
 	return this->memoryAddress;
 }
