@@ -43,6 +43,7 @@ class Process
 		void saveLog(std::string printedString);
 		std::stack<LoopFrame> loopStack;
 		void* memoryAddress = nullptr;		// Pointer to the allocated memory block for this process (if any)
+		size_t memoryRequired;
 
 	public:
 		Process(int pid, std::string name, size_t memoryRequired);
@@ -55,7 +56,6 @@ class Process
 		void resetCyclesInCPU();
 		int getCyclesInCPU() const;
 		void decrementSleepTicks();
-		size_t memoryRequired;
 
 		// Getters
 		bool isFinished() const;
@@ -69,6 +69,7 @@ class Process
 		std::string getCreatedTime() const;
 		int getRemainingSleepTicks() const;
 		SymbolTable& getSymbolTable();
+		size_t getMemoryRequired() const;
 		void* getMemoryAddress() const;
 
 		// Setters
