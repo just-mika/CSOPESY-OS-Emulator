@@ -10,6 +10,10 @@ struct Config {
 	unsigned long long minIns;
 	unsigned long long maxIns;
 	unsigned long long delaysPerExec;
+	// memory
+	unsigned long long maxOverallMem;
+	unsigned long long memPerFrame;
+	unsigned long long memPerProc;
 };
 
 bool loadConfig(std::string filename, Config& config);
