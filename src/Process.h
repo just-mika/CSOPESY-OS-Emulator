@@ -42,9 +42,10 @@ class Process
 		std::shared_ptr<std::vector<std::string>> printLogs; 
 		void saveLog(std::string printedString);
 		std::stack<LoopFrame> loopStack;
+		void* memoryAddress = nullptr;		// Pointer to the allocated memory block for this process (if any)
 
 	public:
-		Process(int pid, std::string name);
+		Process(int pid, std::string name, size_t memoryRequired);
 		void addCommand(std::shared_ptr<ICommand> command);
 		void nextInstruction();
 		void initializeCommands(int limit);
@@ -54,6 +55,7 @@ class Process
 		void resetCyclesInCPU();
 		int getCyclesInCPU() const;
 		void decrementSleepTicks();
+		size_t memoryRequired;
 
 		// Getters
 		bool isFinished() const;
@@ -67,11 +69,14 @@ class Process
 		std::string getCreatedTime() const;
 		int getRemainingSleepTicks() const;
 		SymbolTable& getSymbolTable();
+		void* getMemoryAddress() const;
 
 		// Setters
 		void setCPUCoreID(int coreID);
 		void setRemainingSleepTicks(int ticks);
+		void setMemoryAddress(void* ptr);
 };
+
 
 /*
 struct requirementFlags {

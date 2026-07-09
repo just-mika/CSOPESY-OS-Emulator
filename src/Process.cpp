@@ -5,17 +5,19 @@
 #include "SleepCommand.h"
 #include "FileLogger.h"
 #include "ForCommand.h"
+#include "FlatMemoryAllocator.h"
 #include "Windows.h"
 #include <iomanip>
 #include <sstream>
 #include <fstream>
 #include <cstdlib>
 
-Process::Process(int pid, std::string name)
+Process::Process(int pid, std::string name, size_t memoryRequired)
 {
 	this->pID = pid;
 	this->name = name;
 	this->commandCounter = 0;
+	this->memoryRequired = memoryRequired;
 	this->currentState = READY;
 	this->cpuCoreID = -1; // has not been assigned to a core yet
 	this->creationTime = std::time(nullptr);
@@ -265,6 +267,13 @@ void Process::nextInstruction() {
 	}
 }
 
+void* Process::getMemoryAddress() const {
+	return this->memoryAddress;
+}
+
+void Process::setMemoryAddress(void* ptr) {
+	this->memoryAddress = ptr;
+}
 
 void Process::incrementCyclesInCPU()
 {
