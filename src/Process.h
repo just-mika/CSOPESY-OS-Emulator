@@ -44,6 +44,7 @@ class Process
 		std::stack<LoopFrame> loopStack;
 		void* memoryAddress = nullptr;		// Pointer to the allocated memory block for this process (if any)
 		size_t memoryRequired;
+		 
 
 	public:
 		Process(int pid, std::string name, size_t memoryRequired);
@@ -76,6 +77,7 @@ class Process
 		void setCPUCoreID(int coreID);
 		void setRemainingSleepTicks(int ticks);
 		void setMemoryAddress(void* ptr);
+		void setState(ProcessState state);
 };
 
 

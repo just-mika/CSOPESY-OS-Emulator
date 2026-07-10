@@ -48,6 +48,9 @@ void CPUWorker::run() {
             if (currentProcess != nullptr && !currentProcess->isFinished()) {
                 currentProcess->nextInstruction();
             }
+            else if (currentProcess != nullptr && currentProcess->isFinished()) {
+                g->checkMemoryBlockedQueue(); // 
+            }
             lock.unlock();
         }
         cpuCycles++;

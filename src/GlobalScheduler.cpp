@@ -1,4 +1,5 @@
 #include "GlobalScheduler.h"
+#include "FlatMemoryAllocator.h"
 #include <iostream>
 #include <iomanip> // for std::setw and std::left
 #include <fstream>
@@ -188,6 +189,9 @@ void GlobalScheduler::init(Config config) {
 	}
 	sharedInstance->startWorkers();
 	sharedInstance->start();
+	// Add initialization of Memory Allocator
+	size_t maxSize = static_cast<size_t>(sharedInstance->AScheduler::maxOverallMem);
+	FlatMemoryAllocator::init(maxSize);
 }
 
 void GlobalScheduler::startWorkers()
@@ -207,7 +211,7 @@ void GlobalScheduler::destroy()
 
 std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name)
 {
-	auto process = std::make_shared<Process>(++nextPID, name);
+	auto process = std::make_shared<Process>(++nextPID, name, AScheduler::memPerProc);
 	int totalCommands = (rand() % (maxIns - minIns + 1)) + minIns;
 	process->initializeCommands(totalCommands);
 	addProcess(process);
@@ -241,7 +245,7 @@ std::shared_ptr<Process> GlobalScheduler::generateProcess()
 	if (++nextPID < 10) processName += "0";
 	processName += std::to_string(nextPID);
 
-	std::shared_ptr<Process> newProcess = std::make_shared<Process>(nextPID, processName);
+	std::shared_ptr<Process> newProcess = std::make_shared<Process>(nextPID, processName, AScheduler::memPerProc);
 
 	int totalCommands = (rand() % (maxIns-minIns + 1)) + minIns;
 	

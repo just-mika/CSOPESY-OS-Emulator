@@ -141,6 +141,7 @@ std::string static formatTime(time_t timeToFormat) {
 std::string Process::getCreatedTime() const {
 	return formatTime(this->creationTime);
 }
+
 void Process::addCommand(std::shared_ptr<ICommand> command)
 {
 	if (command != nullptr) {
@@ -191,8 +192,12 @@ std::shared_ptr<std::vector<std::string>> Process::getPrintLogs() const {
 }
 
 void Process::nextInstruction() {
-	if (isFinished() || commandList.empty()) return;
-
+	if (isFinished() || commandList.empty()) {
+		// Deallocate memory
+		FlatMemoryAllocator::getInstance()->deallocate(memoryAddress);
+		setMemoryAddress(nullptr);
+		return;
+	}
 	if (commandCounter == 0) {
 		execDT = std::chrono::system_clock::now();
 		currentState = RUNNING;
@@ -328,7 +333,9 @@ ProcessState Process::getState() const
 {
 	return currentState;
 }
-
+void Process::setState(ProcessState state) {
+	this->currentState = state;
+}
 std::string Process::getName() const
 {
 	return name;

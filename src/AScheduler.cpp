@@ -1,4 +1,5 @@
 ﻿#include "AScheduler.h"
+#include "FlatMemoryAllocator.h"
 #include <deque>
 #include <thread>
 
@@ -11,14 +12,45 @@ AScheduler::AScheduler(Config config)
     quantumCycles(config.quantumCycles),
     batchProcessFreq(config.batchProcessFreq),
     minIns(config.minIns),
-    maxIns(config.maxIns)
+    maxIns(config.maxIns),
+    maxOverallMem(config.maxOverallMem),
+    memPerFrame(config.memPerFrame),
+    memPerProc(config.memPerProc)
 { }
+void AScheduler::checkMemoryBlockedQueue() {
+    auto memAllocator = FlatMemoryAllocator::getInstance();
+    auto it = waitingForMemoryQueue.begin();
+    while (it != waitingForMemoryQueue.end()) {
+        auto process = *it;
+        void* ptr = FlatMemoryAllocator::getInstance()->allocate(process->getMemoryRequired());
+        if (ptr != nullptr) {
+            process->setMemoryAddress(ptr);
+            process->setState(ProcessState::READY);
+            std::unique_lock lock(mutex);
+            readyQueue.push_back(process);
+            processTable[process->getPID()] = process;
+            it = waitingForMemoryQueue.erase(it);
+            lock.unlock();
+        }
+        else {
+            break;
+        }
+    }
 
-
+}
 void AScheduler::addProcess(std::shared_ptr<Process> process) {
+    // Check if there is enough memory
+    void* ptr = FlatMemoryAllocator::getInstance()->allocate(process->getMemoryRequired());
     std::unique_lock lock(mutex);
-    processTable[process->getPID()] = process;
-    readyQueue.push_back(process);
+    if (ptr != nullptr) {
+        process->setMemoryAddress(ptr);
+        processTable[process->getPID()] = process;
+        readyQueue.push_back(process);
+    }
+    else {
+        process->setState(ProcessState::WAITING);
+        waitingForMemoryQueue.push_back(process);
+    }
     lock.unlock();
 }
 

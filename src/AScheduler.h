@@ -29,6 +29,7 @@ public:
     std::deque<std::shared_ptr<Process>> getFinishedProcesses();
     std::deque<std::shared_ptr<Process>> getRunningProcesses();
     std::shared_ptr<Process> findProcess(int pid);
+    void checkMemoryBlockedQueue();
     void removeProcess(int pid);
 
 protected:
@@ -39,6 +40,10 @@ protected:
     unsigned long long minIns;
     unsigned long long maxIns;
     unsigned long long delaysPerExec;
+    // Memory-related Configuration
+    unsigned long long maxOverallMem;
+    unsigned long long memPerFrame;
+    unsigned long long memPerProc;
 
     mutable std::shared_mutex mutex;
     int cpuCycles = 0;
@@ -49,5 +54,6 @@ protected:
     std::deque<std::shared_ptr<Process>> finishedProcesses;
     std::deque<std::shared_ptr<Process>> runningProcesses;
     std::list<std::shared_ptr<Process>> waitingProcesses;
+    std::deque<std::shared_ptr<Process>> waitingForMemoryQueue;
     std::unordered_map<int, std::shared_ptr<Process>> processTable;
 };
