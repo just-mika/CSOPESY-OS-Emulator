@@ -193,9 +193,6 @@ std::shared_ptr<std::vector<std::string>> Process::getPrintLogs() const {
 
 void Process::nextInstruction() {
 	if (isFinished() || commandList.empty()) {
-		// Deallocate memory
-		FlatMemoryAllocator::getInstance()->deallocate(memoryAddress);
-		setMemoryAddress(nullptr);
 		return;
 	}
 	if (commandCounter == 0) {

@@ -82,11 +82,16 @@ void GlobalScheduler::runRR()
 				{
 					//pause process (change state from RUNNING to READY)
 					process->pauseProcess();
+					
+					// Swap Out
+					FlatMemoryAllocator::getInstance()->deallocate(process->getMemoryAddress());
+					process->setMemoryAddress(nullptr);
 
 					std::unique_lock lock(mutex);
 
-					//place in process in ready queue
-					readyQueue.push_back(process);
+					// Add to WaitingForMemoryQueue
+					waitingForMemoryQueue.push_back(process);
+
 					// Remove from running list
 					auto it = std::find(runningProcesses.begin(), runningProcesses.end(), process);
 					if (it != runningProcesses.end()) {
@@ -95,6 +100,7 @@ void GlobalScheduler::runRR()
 
 					lock.unlock();
 					worker->assignProcess(nullptr); // Free the worker
+					checkMemoryBlockedQueue();
 				}
 				//reset this whether or not RQ is empty.
 				process->resetCyclesInCPU();
@@ -149,6 +155,10 @@ void GlobalScheduler::updateWorkers()
 		else if (currentProc->getState() == ProcessState::WAITING) {
 			currentProc->resetCyclesInCPU(); // Reset counter for clean tracking
 
+			// Swap Out
+			FlatMemoryAllocator::getInstance()->deallocate(currentProc->getMemoryAddress());
+			currentProc->setMemoryAddress(nullptr);
+
 			std::unique_lock lock(mutex);
 			waitingProcesses.push_back(currentProc); // Move to sleeping track
 
@@ -158,6 +168,8 @@ void GlobalScheduler::updateWorkers()
 			}
 			lock.unlock();
 			worker->assignProcess(nullptr);
+
+			checkMemoryBlockedQueue();
 		}
 		else {
 			worker->getCurrentProcess()->incrementCyclesInCPU();
@@ -176,8 +188,7 @@ void GlobalScheduler::updateWaitingProcesses()
 
 		// 2. Check if it's time to wake up
 		if (process->getRemainingSleepTicks() <= 0) {
-			readyQueue.push_back(process);
-
+			waitingForMemoryQueue.push_back(process);
 			// Remove it from the sleeping list safely mid-iteration
 			it = waitingProcesses.erase(it);
 		}
@@ -186,6 +197,7 @@ void GlobalScheduler::updateWaitingProcesses()
 		}
 	}
 	lock.unlock();
+	checkMemoryBlockedQueue();
 }
 
 GlobalScheduler* GlobalScheduler::getInstance()
