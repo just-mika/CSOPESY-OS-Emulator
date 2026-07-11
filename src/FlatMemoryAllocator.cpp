@@ -15,7 +15,6 @@ void FlatMemoryAllocator::init(size_t size) {
     if (!sharedInstance) {
         sharedInstance = new FlatMemoryAllocator(size);
     }
-    sharedInstance->memory.resize(size);
 }
 
 FlatMemoryAllocator* FlatMemoryAllocator::getInstance() {
@@ -23,11 +22,16 @@ FlatMemoryAllocator* FlatMemoryAllocator::getInstance() {
 }
 
 void* FlatMemoryAllocator::allocate(size_t size) {
+    return allocate(size, -1, "");
+}
+
+
+void* FlatMemoryAllocator::allocate(size_t size, int pid, const std::string& name) {
     std::lock_guard<std::mutex> lock(mtx);
 
-    for (size_t i = 0; i <= maximumSize - size; ++i) {
+    for (size_t i = 0; i + size <= maximumSize; ++i) {
         if (!allocationMap[i] && canAllocateAt(i, size)) {
-            allocateAt(i, size);
+            allocateAt(i, size, pid, name);
             return &memory[i];
         }
     }
@@ -52,22 +56,42 @@ bool FlatMemoryAllocator::canAllocateAt(size_t index, size_t size) const {
     return true;
 }
 
-void FlatMemoryAllocator::allocateAt(size_t index, size_t size) {
+void FlatMemoryAllocator::allocateAt(size_t index, size_t size, int pid, const std::string& name) {
     std::fill(allocationMap.begin() + index, allocationMap.begin() + index + size, true);
     std::fill(memory.begin() + index, memory.begin() + index + size, '#');
-    allocationSizes[index] = size;
+    memoryLayout[index] = { size, pid, name };
     allocatedSize += size;
 }
 
+
 void FlatMemoryAllocator::deallocateAt(size_t index) {
-    size_t size = allocationSizes[index];
+    size_t size = memoryLayout[index].size;
     std::fill(allocationMap.begin() + index, allocationMap.begin() + index + size, false);
     std::fill(memory.begin() + index, memory.begin() + index + size, '.');
     allocatedSize -= size;
-    allocationSizes.erase(index);
+    memoryLayout.erase(index);
 }
 
 std::string FlatMemoryAllocator::visualizeMemory() {
     std::lock_guard<std::mutex> lock(mtx);
     return std::string(memory.begin(), memory.end());
+}
+
+std::vector<AllocatedBlock> FlatMemoryAllocator::getAllocatedBlocks() const {
+    std::lock_guard<std::mutex> lock(mtx);
+    std::vector<AllocatedBlock> blocks;
+    for (auto& entry : memoryLayout) {
+        blocks.push_back({ entry.first, entry.second.size, entry.second.pid, entry.second.name });
+    }
+    return blocks;
+}
+
+size_t FlatMemoryAllocator::getMaxSize() const {
+    return maximumSize;
+}
+
+void FlatMemoryAllocator::destroy()
+{
+    delete sharedInstance;
+    sharedInstance = nullptr;
 }

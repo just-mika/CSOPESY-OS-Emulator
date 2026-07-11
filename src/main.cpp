@@ -1,4 +1,5 @@
 #include "ConsoleManager.h"
+#include "FlatMemoryAllocator.h"
 #include "GlobalScheduler.h"
 
 int main()
@@ -15,6 +16,10 @@ int main()
 
     if (GlobalScheduler::getInstance() != nullptr)
         GlobalScheduler::destroy();
+
+    if (FlatMemoryAllocator::getInstance() != nullptr)
+        FlatMemoryAllocator::destroy();
+
     ConsoleManager::destroy();
 
     return 0;

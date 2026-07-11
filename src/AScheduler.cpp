@@ -18,11 +18,11 @@ AScheduler::AScheduler(Config config)
     memPerProc(config.memPerProc)
 { }
 void AScheduler::checkMemoryBlockedQueue() {
-    auto memAllocator = FlatMemoryAllocator::getInstance();
     auto it = waitingForMemoryQueue.begin();
     while (it != waitingForMemoryQueue.end()) {
         auto process = *it;
-        void* ptr = FlatMemoryAllocator::getInstance()->allocate(process->getMemoryRequired());
+        void* ptr = FlatMemoryAllocator::getInstance()->allocate(
+            process->getMemoryRequired(), process->getPID(), process->getName());
         if (ptr != nullptr) {
             process->setMemoryAddress(ptr);
             process->setState(ProcessState::READY);
@@ -36,11 +36,12 @@ void AScheduler::checkMemoryBlockedQueue() {
             break;
         }
     }
-
 }
+
 void AScheduler::addProcess(std::shared_ptr<Process> process) {
     // Check if there is enough memory
-    void* ptr = FlatMemoryAllocator::getInstance()->allocate(process->getMemoryRequired());
+    void* ptr = FlatMemoryAllocator::getInstance()->allocate(
+        process->getMemoryRequired(), process->getPID(), process->getName());
     std::unique_lock lock(mutex);
     if (ptr != nullptr) {
         process->setMemoryAddress(ptr);

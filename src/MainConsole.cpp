@@ -4,6 +4,7 @@
 #include "MainConsole.h"
 #include "Config.h"
 #include "ConsoleManager.h"
+#include "FlatMemoryAllocator.h"
 #include "GlobalScheduler.h"
 
 #define CONFIG_FILE "resources/config.txt"

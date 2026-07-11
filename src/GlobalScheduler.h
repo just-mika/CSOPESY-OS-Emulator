@@ -18,7 +18,6 @@ public:
     void printConfig();
     bool isInitialized();
     bool hasStarted();
-
     friend class CPUWorker;
 
 private:
@@ -37,4 +36,5 @@ private:
     void runRR();
     void updateWorkers();
     void updateWaitingProcesses();
+    void generateMemLog(int cpuCycles);
 };
