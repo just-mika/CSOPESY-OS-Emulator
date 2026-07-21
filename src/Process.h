@@ -21,7 +21,6 @@ enum ProcessState {
 	RUNNING,
 	WAITING,
 	FINISHED
-
 };
 
 

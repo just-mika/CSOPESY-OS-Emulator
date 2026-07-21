@@ -18,41 +18,36 @@ AScheduler::AScheduler(Config config)
     memPerProc(config.memPerProc)
 { }
 void AScheduler::checkMemoryBlockedQueue() {
-    auto it = waitingForMemoryQueue.begin();
-    while (it != waitingForMemoryQueue.end()) {
+    std::unique_lock lock(mutex);
+    auto it = memoryQueue.begin();
+    while (it != memoryQueue.end()) {
         auto process = *it;
         void* ptr = FlatMemoryAllocator::getInstance()->allocate(
             process->getMemoryRequired(), process->getPID(), process->getName());
         if (ptr != nullptr) {
             process->setMemoryAddress(ptr);
             process->setState(ProcessState::READY);
-            std::unique_lock lock(mutex);
+         
             readyQueue.push_back(process);
             processTable[process->getPID()] = process;
-            it = waitingForMemoryQueue.erase(it);
-            lock.unlock();
+            it = memoryQueue.erase(it);
+            
         }
         else {
             break;
         }
     }
+    lock.unlock();
 }
 
 void AScheduler::addProcess(std::shared_ptr<Process> process) {
-    // Check if there is enough memory
-    void* ptr = FlatMemoryAllocator::getInstance()->allocate(
-        process->getMemoryRequired(), process->getPID(), process->getName());
+    // When a process comes, add them first to the memoryQueue
+    // LOCK FIRST
     std::unique_lock lock(mutex);
-    if (ptr != nullptr) {
-        process->setMemoryAddress(ptr);
-        processTable[process->getPID()] = process;
-        readyQueue.push_back(process);
-    }
-    else {
-        process->setState(ProcessState::WAITING);
-        waitingForMemoryQueue.push_back(process);
-    }
+    process->setState(ProcessState::WAITING);
+    memoryQueue.push_back(process);
     lock.unlock();
+    checkMemoryBlockedQueue();
 }
 
 std::shared_ptr<Process> AScheduler::findProcess(const std::string& processName) {

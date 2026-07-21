@@ -35,6 +35,6 @@ private:
     void runFCFS();
     void runRR();
     void updateWorkers();
-    void updateWaitingProcesses();
+    void updateSleepingProcesses();
     void generateMemLog(int cpuCycles);
 };

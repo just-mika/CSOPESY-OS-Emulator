@@ -27,28 +27,28 @@ void GlobalScheduler::run()
 
 	while (running)
 	{
-		if (generateProcesses) tick();
+		if (generateProcesses) {
+			tick();
 
-		//check workers if current process is finished executing & update accordingly
-		//also updates the queue
-		updateWorkers();
-		updateWaitingProcesses();
+			updateWorkers();
+			updateSleepingProcesses();
+			checkMemoryBlockedQueue();
 
-		if (algo == SchedulingAlgorithm::FCFS)
-		{
-			runFCFS();
+			if (algo == SchedulingAlgorithm::FCFS) {
+				runFCFS();
+			}
+			else if (algo == SchedulingAlgorithm::RR) {
+				runRR();
+			}
+
+			cpuCycles++;
+
+			if (cpuCycles > 0 && cpuCycles % quantumCycles == 0) {
+				generateMemLog(cpuCycles);
+			}
 		}
-		else if (algo == SchedulingAlgorithm::RR)
-		{
-			runRR();
-		}
-		
+
 		this->sleep(100);
-		cpuCycles++;
-
-		if (cpuCycles % quantumCycles == 0) {
-			generateMemLog(cpuCycles);
-		}
 	}
 }
 
@@ -83,14 +83,10 @@ void GlobalScheduler::runRR()
 					//pause process (change state from RUNNING to READY)
 					process->pauseProcess();
 					
-					// Swap Out
-					FlatMemoryAllocator::getInstance()->deallocate(process->getMemoryAddress());
-					process->setMemoryAddress(nullptr);
-
 					std::unique_lock lock(mutex);
 
-					// Add to WaitingForMemoryQueue
-					waitingForMemoryQueue.push_back(process);
+					// Add back to readyQueue
+					readyQueue.push_back(process);
 
 					// Remove from running list
 					auto it = std::find(runningProcesses.begin(), runningProcesses.end(), process);
@@ -100,7 +96,6 @@ void GlobalScheduler::runRR()
 
 					lock.unlock();
 					worker->assignProcess(nullptr); // Free the worker
-					checkMemoryBlockedQueue();
 				}
 				//reset this whether or not RQ is empty.
 				process->resetCyclesInCPU();
@@ -151,16 +146,12 @@ void GlobalScheduler::updateWorkers()
 
 			checkMemoryBlockedQueue();
 		}
-		//handle WAITING state (triggered by SLEEP(X))
-		else if (currentProc->getState() == ProcessState::WAITING) {
+		// handle WAITING state (triggered by SLEEP(X)); do not include unallocated processes
+		else if (currentProc->getState() == ProcessState::WAITING && currentProc->getMemoryAddress() != nullptr) {
 			currentProc->resetCyclesInCPU(); // Reset counter for clean tracking
 
-			// Swap Out
-			FlatMemoryAllocator::getInstance()->deallocate(currentProc->getMemoryAddress());
-			currentProc->setMemoryAddress(nullptr);
-
 			std::unique_lock lock(mutex);
-			waitingProcesses.push_back(currentProc); // Move to sleeping track
+			sleepingProcesses.push_back(currentProc); // Move to sleeping track
 
 			auto it = std::find(runningProcesses.begin(), runningProcesses.end(), currentProc);
 			if (it != runningProcesses.end()) {
@@ -168,8 +159,6 @@ void GlobalScheduler::updateWorkers()
 			}
 			lock.unlock();
 			worker->assignProcess(nullptr);
-
-			checkMemoryBlockedQueue();
 		}
 		else {
 			worker->getCurrentProcess()->incrementCyclesInCPU();
@@ -177,10 +166,11 @@ void GlobalScheduler::updateWorkers()
 	}
 }
 
-void GlobalScheduler::updateWaitingProcesses()
+// Sleep Command
+void GlobalScheduler::updateSleepingProcesses()
 {
 	std::unique_lock lock(mutex);
-	for (auto it = waitingProcesses.begin(); it != waitingProcesses.end(); ) {
+	for (auto it = sleepingProcesses.begin(); it != sleepingProcesses.end(); ) {
 		auto process = *it;
 
 		// 1. Decrement the sleep timer by 1 tick
@@ -188,9 +178,10 @@ void GlobalScheduler::updateWaitingProcesses()
 
 		// 2. Check if it's time to wake up
 		if (process->getRemainingSleepTicks() <= 0) {
-			waitingForMemoryQueue.push_back(process);
+			process->setState(ProcessState::READY);
+			readyQueue.push_back(process);
 			// Remove it from the sleeping list safely mid-iteration
-			it = waitingProcesses.erase(it);
+			it = sleepingProcesses.erase(it);
 		}
 		else {
 			++it; // Move to the next sleeping process
@@ -209,11 +200,13 @@ void GlobalScheduler::init(Config config) {
 	if (!sharedInstance) {
 		sharedInstance = new GlobalScheduler(config);
 	}
-	sharedInstance->startWorkers();
-	sharedInstance->start();
-	// Add initialization of Memory Allocator
+	// Initialize Memory Allocator First
 	size_t maxSize = static_cast<size_t>(sharedInstance->AScheduler::maxOverallMem);
 	FlatMemoryAllocator::init(maxSize);
+
+	// Start the Workers
+	sharedInstance->startWorkers();
+	sharedInstance->start();
 }
 
 void GlobalScheduler::startWorkers()
