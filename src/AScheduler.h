@@ -3,7 +3,7 @@
 #include <memory>
 #include <deque>
 #include <shared_mutex>
-
+#include "IMemoryAllocator.h"
 #include "Process.h"
 #include "OSThread.h"
 #include "Config.h"
@@ -56,4 +56,6 @@ protected:
     std::list<std::shared_ptr<Process>> sleepingProcesses;
     std::deque<std::shared_ptr<Process>> memoryQueue;
     std::unordered_map<int, std::shared_ptr<Process>> processTable;
+    std::shared_ptr<IMemoryAllocator> memoryAllocator;
+
 };

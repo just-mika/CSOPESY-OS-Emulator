@@ -19,25 +19,22 @@ AScheduler::AScheduler(Config config)
 { }
 void AScheduler::checkMemoryBlockedQueue() {
     std::unique_lock lock(mutex);
+
     auto it = memoryQueue.begin();
     while (it != memoryQueue.end()) {
         auto process = *it;
-        void* ptr = FlatMemoryAllocator::getInstance()->allocate(
-            process->getMemoryRequired(), process->getPID(), process->getName());
+        void* ptr = memoryAllocator->allocate(process->getMemoryRequired());
         if (ptr != nullptr) {
             process->setMemoryAddress(ptr);
             process->setState(ProcessState::READY);
-         
             readyQueue.push_back(process);
             processTable[process->getPID()] = process;
             it = memoryQueue.erase(it);
-            
         }
         else {
             break;
         }
     }
-    lock.unlock();
 }
 
 void AScheduler::addProcess(std::shared_ptr<Process> process) {

@@ -4,6 +4,9 @@
 #include <memory>
 #include "CPUWorker.h"
 #include "AScheduler.h"
+#include "PagedMemoryAllocator.h"
+#include "FlatMemoryAllocator.h"
+#include "IMemoryAllocator.h"
 
 class GlobalScheduler : public AScheduler {
 public:
@@ -37,4 +40,5 @@ private:
     void updateWorkers();
     void updateSleepingProcesses();
     void generateMemLog(int cpuCycles);
+
 };

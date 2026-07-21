@@ -2,7 +2,6 @@
 
 #include <filesystem>
 
-#include "FlatMemoryAllocator.h"
 #include <iostream>
 #include <iomanip> // for std::setw and std::left
 #include <fstream>
@@ -129,21 +128,19 @@ void GlobalScheduler::updateWorkers()
 		auto currentProc = worker->getCurrentProcess();
 
 		if (currentProc->isFinished()) {
-			FlatMemoryAllocator::getInstance()->deallocate(currentProc->getMemoryAddress());
+			memoryAllocator->deallocate(currentProc->getMemoryAddress());
 			currentProc->setMemoryAddress(nullptr);
 
 			std::unique_lock lock(mutex);
-			// Add to finished list
 			finishedProcesses.push_back(currentProc);
 
-			// Remove from running list
 			auto it = std::find(runningProcesses.begin(), runningProcesses.end(), currentProc);
 			if (it != runningProcesses.end()) {
 				runningProcesses.erase(it);
 			}
 			lock.unlock();
-			worker->assignProcess(nullptr); // Free the worker
 
+			worker->assignProcess(nullptr);
 			checkMemoryBlockedQueue();
 		}
 		// handle WAITING state (triggered by SLEEP(X)); do not include unallocated processes
@@ -202,8 +199,10 @@ void GlobalScheduler::init(Config config) {
 	}
 	// Initialize Memory Allocator First
 	size_t maxSize = static_cast<size_t>(sharedInstance->AScheduler::maxOverallMem);
-	FlatMemoryAllocator::init(maxSize);
+	//FlatMemoryAllocator::init(maxSize);
+	PagedMemoryAllocator::init(config.maxOverallMem, config.memPerFrame);
 
+	sharedInstance->memoryAllocator = std::shared_ptr<IMemoryAllocator>(PagedMemoryAllocator::getInstance(), [](IMemoryAllocator*) {});
 	// Start the Workers
 	sharedInstance->startWorkers();
 	sharedInstance->start();
@@ -362,8 +361,13 @@ static std::string formatSnapshotTime(std::time_t t) {
 	return ss.str();
 }
 
+
 void GlobalScheduler::generateMemLog(int cpuCycles) {
-	//inititalize file
+	if (!memoryAllocator) {
+		std::cerr << "[Memory Logger Error] memoryAllocator is null!\n";
+		return;
+	}
+
 	std::string DIRECTORY_PATH = "output/mem_snapshots/";
 
 	try {
@@ -373,49 +377,24 @@ void GlobalScheduler::generateMemLog(int cpuCycles) {
 	}
 	catch (const std::filesystem::filesystem_error& e) {
 		std::cerr << "[Logger Error] Directory creation failed: " << e.what() << std::endl;
+		return;
 	}
 
 	std::string fullFilePath = DIRECTORY_PATH + "memory_stamp_" + std::to_string(cpuCycles) + ".txt";
 	std::ofstream outFile(fullFilePath, std::ios::out);
 
 	if (outFile.is_open()) {
-		auto blocks = FlatMemoryAllocator::getInstance()->getAllocatedBlocks();
-
-		//sort blocks by index in descending order
-		std::sort(blocks.begin(), blocks.end(),
-			[](const AllocatedBlock& a, const AllocatedBlock& b) { return a.index > b.index; });
-
-		//build the block listing first, tallying fragmentation as we go
-		std::ostringstream blockListing;
-		size_t fragmentation = 0;
-		size_t topOfGap = maxOverallMem; // starts at the very top of memory
-
-		for (auto& b : blocks) {
-			size_t blockTop = b.index + b.size;
-			if (topOfGap > blockTop) {
-				fragmentation += (topOfGap - blockTop); // gap ABOVE this block
-			}
-			blockListing << blockTop << "\n" << b.name << "\n" << b.index << "\n\n";
-			topOfGap = b.index; // next gap ends where this block starts
-		}
-		
-
-		//get timestamp
 		std::time_t now = std::time(nullptr);
 		std::tm timeInfo{};
+#ifdef _WIN32
 		localtime_s(&timeInfo, &now);
+#else
+		localtime_r(&now, &timeInfo);
+#endif
 
 		outFile << "Timestamp: (" << std::put_time(&timeInfo, "%m/%d/%Y %I:%M:%S %p") << ")\n";
-		outFile << "Number of processes in memory: " << blocks.size() << "\n";
-		outFile << "Total external fragmentation in KB: " << fragmentation << "\n\n";
-		outFile << "----end---- = " << maxOverallMem << "\n\n";
+		outFile << memoryAllocator->visualizeMemory();
 
-		//iterate through blocks and print details
-		for (auto& b : blocks) {
-			outFile << (b.index + b.size) << "\n" << b.name << "\n" << b.index << "\n\n";
-		}
-
-		outFile << "----start----- = 0\n";
 		outFile.close();
 	}
 	else {
