@@ -8,6 +8,7 @@
 #include <fstream>
 
 #include "CPUWorker.h"
+#include "BackingStore.h"
 
 class ForCommand;
 GlobalScheduler* GlobalScheduler::sharedInstance = nullptr;
@@ -197,9 +198,13 @@ GlobalScheduler* GlobalScheduler::getInstance()
 }
 
 void GlobalScheduler::init(Config config) {
+	std::string fileName = "BackingStore.bin";
 	if (!sharedInstance) {
 		sharedInstance = new GlobalScheduler(config);
 	}
+	// Initialize BackingStore
+	BackingStore disk(fileName, sharedInstance->AScheduler::memPerFrame);
+
 	// Initialize Memory Allocator First
 	size_t maxSize = static_cast<size_t>(sharedInstance->AScheduler::maxOverallMem);
 	FlatMemoryAllocator::init(maxSize);

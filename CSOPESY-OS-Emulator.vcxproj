@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="src\AConsole.cpp" />
     <ClCompile Include="src\AScheduler.cpp" />
+    <ClCompile Include="src\BackingStore.cpp" />
     <ClCompile Include="src\BaseScreen.cpp" />
     <ClCompile Include="src\Config.cpp" />
     <ClCompile Include="src\ConsoleManager.cpp" />
@@ -166,6 +167,7 @@
   <ItemGroup>
     <ClInclude Include="src\AConsole.h" />
     <ClInclude Include="src\AScheduler.h" />
+    <ClInclude Include="src\BackingStore.h" />
     <ClInclude Include="src\BaseScreen.h" />
     <ClInclude Include="src\Config.h" />
     <ClInclude Include="src\ConsoleManager.h" />
