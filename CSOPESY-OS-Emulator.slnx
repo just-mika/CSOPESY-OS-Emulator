@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="CSOPESY-OS-Emulator.vcxproj" Id="aaf267a2-f09b-4ffc-b066-aad743baa0af" />
+</Solution>
