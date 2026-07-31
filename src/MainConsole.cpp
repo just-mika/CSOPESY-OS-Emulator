@@ -7,7 +7,6 @@
 #include "MainConsole.h"
 #include "Config.h"
 #include "ConsoleManager.h"
-#include "FlatMemoryAllocator.h"
 #include "GlobalScheduler.h"
 
 #define CONFIG_FILE "resources/config.txt"
@@ -343,6 +342,12 @@ void MainConsole::handleCommand(const std::string& input) {
             std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
         }
     }
+    else if (command == "process-smi") {
+
+    }
+    else if (command == "vmstat") {
+
+    }
     else std::cout << "Unknown command: " << input << std::endl;
 }
 
@@ -383,17 +388,7 @@ void printHeader()
 
 void MainConsole::displayScreenLS() const
 {
-    auto workers = GlobalScheduler::getInstance()->getWorkers();
-    int activeCores = 0;
-    int totalCores = workers.size();
-
-    for (const auto& worker : workers) 
-    {
-        if (!worker->isFree()) 
-        {
-            activeCores++;
-        }
-    }
+    auto [activeCores, totalCores] = getActiveAndTotalCores();
     
     int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
 
@@ -433,4 +428,32 @@ void MainConsole::displayScreenLS() const
     else std::cout << "No finished processes\n";
     
     std::cout << "--------------------------------------------------\n";
+}
+
+void displayProcessSMI() {
+    auto [activeCores, totalCores] = getActiveAndTotalCores();
+    int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
+
+    std::cout << "PROCESS-SMI\n";
+    std::cout << "--------------------------------------------------\n";
+    std::cout << "CPU Utilization: " << cpuUtil << "%\n";
+
+
+// CPU-Util
+    // Memory Usage:
+    // Memory Util:
+}
+std::pair<int, int> getActiveAndTotalCores() {
+    auto workers = GlobalScheduler::getInstance()->getWorkers();
+    int activeCores = 0;
+    int totalCores = workers.size();
+
+    for (const auto& worker : workers)
+    {
+        if (!worker->isFree())
+        {
+            activeCores++;
+        }
+    }
+    return { activeCores, totalCores };
 }

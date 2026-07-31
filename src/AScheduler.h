@@ -7,6 +7,7 @@
 #include "Process.h"
 #include "OSThread.h"
 #include "Config.h"
+#include "IMemoryAllocator.h"
 
 enum SchedulingAlgorithm
 {
@@ -31,6 +32,7 @@ public:
     std::shared_ptr<Process> findProcess(int pid);
     void checkMemoryBlockedQueue();
     void removeProcess(int pid);
+    mutable std::shared_mutex mutex;
 
 protected:
     SchedulingAlgorithm algo;
@@ -46,7 +48,7 @@ protected:
     unsigned long long minMemPerProc;
     unsigned long long maxMemPerProc;
 
-    mutable std::shared_mutex mutex;
+    
     int cpuCycles = 0;
     int nextPID = 0;
 
@@ -57,4 +59,5 @@ protected:
     std::list<std::shared_ptr<Process>> sleepingProcesses;
     std::deque<std::shared_ptr<Process>> memoryQueue;
     std::unordered_map<int, std::shared_ptr<Process>> processTable;
+    std::shared_ptr<IMemoryAllocator> memoryAllocator;
 };
