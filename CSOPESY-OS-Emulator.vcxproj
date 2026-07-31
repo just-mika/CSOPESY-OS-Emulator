@@ -156,6 +156,7 @@
     <ClCompile Include="src\MainConsole.cpp" />
     <ClCompile Include="src\MathCommand.cpp" />
     <ClCompile Include="src\OSThread.cpp" />
+    <ClCompile Include="src\PagedMemoryAllocator.cpp" />
     <ClCompile Include="src\PrintCommand.cpp" />
     <ClCompile Include="src\Process.cpp" />
     <ClCompile Include="src\ReadCommand.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="src\MainConsole.h" />
     <ClInclude Include="src\MathCommand.h" />
     <ClInclude Include="src\OSThread.h" />
+    <ClInclude Include="src\PagedMemoryAllocator.h" />
     <ClInclude Include="src\PrintCommand.h" />
     <ClInclude Include="src\Process.h" />
     <ClInclude Include="src\ReadCommand.h" />
