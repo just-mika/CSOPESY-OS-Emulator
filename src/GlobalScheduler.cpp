@@ -2,7 +2,7 @@
 
 #include <filesystem>
 
-#include "FlatMemoryAllocator.h"
+#include "PagedMemoryAllocator.h"
 #include <iostream>
 #include <iomanip> // for std::setw and std::left
 #include <fstream>
@@ -130,7 +130,7 @@ void GlobalScheduler::updateWorkers()
 		auto currentProc = worker->getCurrentProcess();
 
 		if (currentProc->isFinished()) {
-			FlatMemoryAllocator::getInstance()->deallocate(currentProc->getMemoryAddress());
+			PagedMemoryAllocator::getInstance()->deallocate(currentProc->getMemoryAddress());
 			currentProc->setMemoryAddress(nullptr);
 
 			std::unique_lock lock(mutex);
@@ -206,8 +206,9 @@ void GlobalScheduler::init(Config config) {
 	BackingStore disk(fileName, sharedInstance->AScheduler::memPerFrame);
 
 	// Initialize Memory Allocator First
-	size_t maxSize = static_cast<size_t>(sharedInstance->AScheduler::maxOverallMem);
-	FlatMemoryAllocator::init(maxSize);
+	PagedMemoryAllocator::init(config.maxOverallMem, config.memPerFrame);
+	sharedInstance->memoryAllocator = std::shared_ptr<IMemoryAllocator>(PagedMemoryAllocator::getInstance(), [](IMemoryAllocator*) {});
+
 
 	// Start the Workers
 	sharedInstance->startWorkers();
@@ -410,7 +411,7 @@ void GlobalScheduler::generateMemLog(int cpuCycles) {
 
 	std::string fullFilePath = DIRECTORY_PATH + "memory_stamp_" + std::to_string(cpuCycles) + ".txt";
 	std::ofstream outFile(fullFilePath, std::ios::out);
-
+	/*
 	if (outFile.is_open()) {
 		auto blocks = FlatMemoryAllocator::getInstance()->getAllocatedBlocks();
 
@@ -454,4 +455,5 @@ void GlobalScheduler::generateMemLog(int cpuCycles) {
 	else {
 		std::cerr << "[Memory Logger] Unable to initialize file at: " << fullFilePath << std::endl;
 	}
+	*/
 }

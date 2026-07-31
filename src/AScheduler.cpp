@@ -1,5 +1,5 @@
 ﻿#include "AScheduler.h"
-#include "FlatMemoryAllocator.h"
+
 #include <deque>
 #include <thread>
 
@@ -23,22 +23,19 @@ void AScheduler::checkMemoryBlockedQueue() {
     auto it = memoryQueue.begin();
     while (it != memoryQueue.end()) {
         auto process = *it;
-        void* ptr = FlatMemoryAllocator::getInstance()->allocate(
-            process->getMemoryRequired(), process->getPID(), process->getName());
+        size_t sizeR = process->getMemoryRequired();
+        void* ptr = memoryAllocator->allocate(sizeR);
         if (ptr != nullptr) {
             process->setMemoryAddress(ptr);
             process->setState(ProcessState::READY);
-         
             readyQueue.push_back(process);
             processTable[process->getPID()] = process;
             it = memoryQueue.erase(it);
-            
         }
         else {
             break;
         }
     }
-    lock.unlock();
 }
 
 void AScheduler::addProcess(std::shared_ptr<Process> process) {
