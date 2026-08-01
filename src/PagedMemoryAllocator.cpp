@@ -1,4 +1,6 @@
 #include "PagedMemoryAllocator.h"
+
+#include <iostream>
 #include <list>
 #include <unordered_map>
 
@@ -70,6 +72,8 @@ void PagedMemoryAllocator::deallocate(void* ptr) {
 }
 
 void PagedMemoryAllocator::handlePageFault(PageTable* pt, size_t pageIndex) {
+    //std::cout << "[PAGE FAULT] called, pid=" << pt->pid << " page=" << pageIndex << "\n";
+
     PageEntry& entry = pt->entries[pageIndex];
     if (entry.isValid) return;
 
@@ -88,6 +92,8 @@ void PagedMemoryAllocator::handlePageFault(PageTable* pt, size_t pageIndex) {
     entry.isValid = true;
     entry.isDirty = false;
 
+    //std::cout << "[PAGE FAULT] assigned frame " << freeFrame << " to pid=" << pt->pid << " page=" << pageIndex << "\n";
+
     int pageId = pt->pid * 1000 + (int)pageIndex;
     frameOwner[freeFrame] = { pt, pageIndex };
     lruManager.accessPage(pageId);
@@ -99,10 +105,20 @@ void PagedMemoryAllocator::handlePageFault(PageTable* pt, size_t pageIndex) {
 
 size_t PagedMemoryAllocator::selectVictim() {
     int pageId = lruManager.removeFrame();
+    //std::cout << "[LRU] selected victim pageId=" << pageId << "\n";
+
     for (auto& [frameIdx, owner] : frameOwner) {
         int ownerPageId = owner.first->pid * 1000 + (int)owner.second;
-        if (ownerPageId == pageId) return frameIdx;
+        if (ownerPageId == pageId) {
+            //std::cout << "[LRU] victim maps to frame=" << frameIdx
+            //    << " pid=" << owner.first->pid
+            //    << " page=" << owner.second << "\n";
+            return frameIdx;
+        }
     }
+
+    //std::cout << "[LRU] WARNING: victim pageId=" << pageId
+    //    << " not found in frameOwner — lruManager/frameOwner out of sync\n";
     return 0;
 }
 
@@ -113,6 +129,9 @@ void PagedMemoryAllocator::evictPage(size_t frameIndex) {
     PageTable* pt = it->second.first;
     size_t pageIndex = it->second.second;
     PageEntry& entry = pt->entries[pageIndex];
+
+    //std::cout << "[EVICT] frame=" << frameIndex << " pid=" << pt->pid
+    //    << " page=" << pageIndex << " dirty=" << entry.isDirty << "\n";
 
     if (entry.isDirty) {
         int pageId = pt->pid * 1000 + (int)pageIndex;

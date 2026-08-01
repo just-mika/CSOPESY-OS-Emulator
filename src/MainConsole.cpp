@@ -5,6 +5,9 @@
 #include <cctype>
 #include <algorithm>
 #include "MainConsole.h"
+
+#include <filesystem>
+
 #include "Config.h"
 #include "ConsoleManager.h"
 #include "GlobalScheduler.h"
@@ -14,6 +17,7 @@
 void printHeader();
 void printCommand();
 std::pair<int, int> getActiveAndTotalCores();
+void cleanUpOutput();
 
 namespace {
     // trims leading/trailing whitespace
@@ -105,7 +109,11 @@ void MainConsole::handleCommand(const std::string& input) {
         if (GlobalScheduler::getInstance() != nullptr) {
             GlobalScheduler::getInstance()->stop();
         }
+
+        //output cleanup
+        //cleanUpOutput();
         ConsoleManager::getInstance()->exitApplication();
+
     }
     else if (command == "clear") {
         system("cls");
@@ -457,4 +465,19 @@ std::pair<int, int> getActiveAndTotalCores() {
         }
     }
     return { activeCores, totalCores };
+}
+
+void cleanUpOutput()
+{
+    try {
+        if (std::filesystem::exists("output/logs")) {
+            std::filesystem::remove_all("output/logs");
+        }
+        if (std::filesystem::exists("output/mem_snapshots")) {
+            std::filesystem::remove_all("output/mem_snapshots");
+        }
+    }
+    catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "[Cleanup Error] " << e.what() << std::endl;
+    }
 }

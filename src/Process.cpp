@@ -376,6 +376,7 @@ std::string Process::getAccessViolationMessage() const {
 }
 
 uint16_t Process::readMemory(uint32_t addr) {
+	//std::cout << "readMemory called, addr=" << addr << "\n";
 	if (!isValidAddress(addr)) {
 		triggerAccessViolation(addr);
 		return 0;
@@ -412,6 +413,7 @@ uint16_t Process::readMemory(uint32_t addr) {
 }
 
 void Process::writeMemory(uint32_t addr, uint16_t value) {
+	//std::cout << "writeMemory called, addr=" << addr << "\n";
 	if (!isValidAddress(addr)) {
 		triggerAccessViolation(addr);
 		return;
