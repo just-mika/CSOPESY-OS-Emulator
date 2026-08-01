@@ -56,6 +56,14 @@ public:
         return oss.str();
     }
 
+    void ensurePageResident(PageTable* pt, size_t pageIndex) {
+        handlePageFault(pt, pageIndex);
+    }
+    uint8_t* getFramePointer(size_t frameIndex) {
+        return &physicalMemory[frameIndex * frameSize];
+    }
+    size_t getFrameSize() const { return frameSize; }
+
 
 private:
     PagedMemoryAllocator(size_t totalMemory, size_t frameSize, const std::string& backingStoreFile);
