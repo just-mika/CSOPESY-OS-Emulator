@@ -21,8 +21,8 @@ FlatMemoryAllocator* FlatMemoryAllocator::getInstance() {
     return sharedInstance;
 }
 
-void* FlatMemoryAllocator::allocate(size_t size) {
-    return allocate(size, -1, "");
+void* FlatMemoryAllocator::allocate(size_t size, int pid) {
+    return allocate(size, pid, "");
 }
 
 

@@ -202,11 +202,10 @@ void GlobalScheduler::init(Config config) {
 	if (!sharedInstance) {
 		sharedInstance = new GlobalScheduler(config);
 	}
-	// Initialize BackingStore
-	BackingStore disk(fileName, sharedInstance->AScheduler::memPerFrame);
+	
 
 	// Initialize Memory Allocator First
-	PagedMemoryAllocator::init(config.maxOverallMem, config.memPerFrame);
+	PagedMemoryAllocator::init(config.maxOverallMem, config.memPerFrame, fileName);
 	sharedInstance->memoryAllocator = std::shared_ptr<IMemoryAllocator>(PagedMemoryAllocator::getInstance(), [](IMemoryAllocator*) {});
 
 

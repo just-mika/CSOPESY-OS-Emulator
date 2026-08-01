@@ -1,5 +1,9 @@
 #include "BackingStore.h"
+
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <cstring>
 
 BackingStore::BackingStore(const std::string& fileName, size_t pageSize) : pageSize(pageSize) {
     // Creates a new file if it doesn't exist or clears any contents if it exists
@@ -15,24 +19,44 @@ BackingStore::~BackingStore() {
     }
 }
 bool BackingStore::read_page(int pageId, void* buffer) {
-    if (!file.is_open())
-        return false;
+    if (!file.is_open()) return false;
 
-    std::streampos offset = pageId * pageSize;
+    size_t recordWidth = pageSize * 2 + 1;
+    std::streampos offset = (std::streampos)pageId * recordWidth;
     file.seekg(offset);
-    file.read(static_cast<char*>(buffer), pageSize);
 
-    return file.good();
+    std::string hexLine(pageSize * 2, '0');
+    file.read(&hexLine[0], pageSize * 2);
+
+    if (!file.good()) {
+        file.clear();
+        std::memset(buffer, 0, pageSize);
+        return true;
+    }
+
+    uint8_t* out = static_cast<uint8_t*>(buffer);
+    for (size_t i = 0; i < pageSize; i++) {
+        out[i] = (uint8_t)std::stoi(hexLine.substr(i * 2, 2), nullptr, 16);
+    }
+    return true;
 }
 
-bool BackingStore::write_page(int pageId, const void* buffer) {
-    if (!file.is_open())
-        return false;
 
-    std::streampos offset = pageId * pageSize;
+bool BackingStore::write_page(int pageId, const void* buffer) {
+    if (!file.is_open()) return false;
+
+    size_t recordWidth = pageSize * 2 + 1;
+    std::streampos offset = (std::streampos)pageId * recordWidth;
     file.seekp(offset);
-    file.write(static_cast<const char*>(buffer), pageSize);
+
+    const uint8_t* in = static_cast<const uint8_t*>(buffer);
+    std::ostringstream oss;
+    for (size_t i = 0; i < pageSize; i++) {
+        oss << std::hex << std::setw(2) << std::setfill('0') << (int)in[i];
+    }
+    oss << '\n';
+
+    file << oss.str();
     file.flush();
-    
     return file.good();
 }

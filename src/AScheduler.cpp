@@ -24,7 +24,7 @@ void AScheduler::checkMemoryBlockedQueue() {
     while (it != memoryQueue.end()) {
         auto process = *it;
         size_t sizeR = process->getMemoryRequired();
-        void* ptr = memoryAllocator->allocate(sizeR);
+        void* ptr = memoryAllocator->allocate(sizeR, process->getPID());
         if (ptr != nullptr) {
             process->setMemoryAddress(ptr);
             process->setState(ProcessState::READY);
