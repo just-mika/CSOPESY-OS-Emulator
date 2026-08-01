@@ -30,7 +30,7 @@ PagedMemoryAllocator* PagedMemoryAllocator::getInstance() {
 
 void* PagedMemoryAllocator::allocate(size_t size, int pid) {
     std::lock_guard<std::mutex> lock(mtx);
-    if (size == 0 || size > (maximumSize - currentAllocatedSize)) {
+    if (size == 0) {
         return nullptr;
     }
 

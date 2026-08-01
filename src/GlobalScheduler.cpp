@@ -44,9 +44,9 @@ void GlobalScheduler::run()
 
 			cpuCycles++;
 
-			//if (cpuCycles > 0 && cpuCycles % quantumCycles == 0) {
-			//	generateMemLog(cpuCycles);
-			//}
+			if (cpuCycles > 0 && cpuCycles % quantumCycles == 0) {
+				//generateMemLog(cpuCycles);
+			}
 		}
 
 		this->sleep(100);

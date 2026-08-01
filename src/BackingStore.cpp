@@ -43,7 +43,10 @@ bool BackingStore::read_page(int pageId, void* buffer) {
 
 
 bool BackingStore::write_page(int pageId, const void* buffer) {
-    if (!file.is_open()) return false;
+    if (!file.is_open()) {
+     //   std::cout << "[BACKING STORE] write_page FAILED: file not open\n";
+        return false;
+    }
 
     size_t recordWidth = pageSize * 2 + 1;
     std::streampos offset = (std::streampos)pageId * recordWidth;
@@ -58,5 +61,9 @@ bool BackingStore::write_page(int pageId, const void* buffer) {
 
     file << oss.str();
     file.flush();
-    return file.good();
+
+    bool success = file.good();
+    //std::cout << "[BACKING STORE] write_page pageId=" << pageId
+    //    << " offset=" << offset << " success=" << success << "\n";
+    return success;
 }
