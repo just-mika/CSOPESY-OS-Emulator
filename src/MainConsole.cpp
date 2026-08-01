@@ -13,6 +13,7 @@
 
 void printHeader();
 void printCommand();
+std::pair<int, int> getActiveAndTotalCores();
 
 namespace {
     // trims leading/trailing whitespace
