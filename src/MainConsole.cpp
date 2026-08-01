@@ -343,7 +343,7 @@ void MainConsole::handleCommand(const std::string& input) {
         }
     }
     else if (command == "process-smi") {
-
+        displayProcessSMI();
     }
     else if (command == "vmstat") {
 
@@ -385,11 +385,26 @@ void printHeader()
     std::cout << "Wee, Justine\n";
     std::cout << "*==================================================*";
 }
+std::pair<int, int> getActiveAndTotalCores() {
+    std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
+    auto workers = GlobalScheduler::getInstance()->getWorkers();
+    int activeCores = 0;
+    int totalCores = workers.size();
 
+    for (const auto& worker : workers)
+    {
+        if (!worker->isFree())
+        {
+            activeCores++;
+        }
+    }
+    lock.unlock();
+    return { activeCores, totalCores };
+}
 void MainConsole::displayScreenLS() const
 {
     auto [activeCores, totalCores] = getActiveAndTotalCores();
-    
+    std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
     int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
 
     std::cout << "CPU Utilization: " << cpuUtil << "%\n";
@@ -397,6 +412,7 @@ void MainConsole::displayScreenLS() const
     std::cout << "Cores available: " << (totalCores - activeCores) << "\n";
     std::cout << "\n--------------------------------------------------\n";
     
+
     std::cout << "Running processes:\n";
 
     typedef std::deque<std::shared_ptr<Process>> Queue;
@@ -426,34 +442,33 @@ void MainConsole::displayScreenLS() const
         }
     }
     else std::cout << "No finished processes\n";
-    
+    lock.unlock();
     std::cout << "--------------------------------------------------\n";
 }
 
-void displayProcessSMI() {
+void MainConsole::displayProcessSMI() const {
     auto [activeCores, totalCores] = getActiveAndTotalCores();
-    int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
+    std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
 
-    std::cout << "PROCESS-SMI\n";
+    int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
+    std::string usedMemory = GlobalScheduler::getInstance()->getMemoryUse();
+    std::cout << "\n--------------------------------------------------\n";
+    std::cout << "\PROCESS-SMI\n";
     std::cout << "--------------------------------------------------\n";
     std::cout << "CPU Utilization: " << cpuUtil << "%\n";
-
-
-// CPU-Util
-    // Memory Usage:
-    // Memory Util:
-}
-std::pair<int, int> getActiveAndTotalCores() {
-    auto workers = GlobalScheduler::getInstance()->getWorkers();
-    int activeCores = 0;
-    int totalCores = workers.size();
-
-    for (const auto& worker : workers)
-    {
-        if (!worker->isFree())
-        {
-            activeCores++;
+    std::cout << usedMemory << "\n";
+    std::cout << "--------------------------------------------------\n";
+    std::cout << "Running Processes and Memory Usage\n";
+    std::cout << "--------------------------------------------------\n";
+    std::deque<std::shared_ptr<Process>> runningProcesses = GlobalScheduler::getInstance()->getRunningProcesses();
+    if (!runningProcesses.empty()) {
+        for (const auto& p : runningProcesses) {
+            std::cout << p->getName() << " " << p->getMemoryRequired() << "\n";
         }
     }
-    return { activeCores, totalCores };
+    else {
+        std::cout << "No running processes\n";
+    }
+    std::cout << "--------------------------------------------------\n";
+
 }

@@ -7,7 +7,7 @@
 #include <cmath>
 #include "IMemoryAllocator.h"
 
-
+class LRUManager;
 class PagedMemoryAllocator : public IMemoryAllocator {
 public:
     struct PageTable {
@@ -46,4 +46,5 @@ private:
     size_t totalFrames;
     std::vector<bool> frameTable;
     std::vector<PageTable*> activeAllocations;
+    LRUManager* lruManager;
 };

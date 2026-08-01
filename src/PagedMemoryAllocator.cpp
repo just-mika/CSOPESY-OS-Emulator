@@ -1,6 +1,51 @@
 #include "PagedMemoryAllocator.h"
 #include <list>
 #include <unordered_map>
+#include <algorithm>
+
+class LRUManager {
+public:
+    LRUManager(size_t maxFrames) : maxFrames(maxFrames) {}
+
+    void accessPage(size_t frameId) {
+        std::lock_guard<std::mutex> lock(lruMtx);
+        if (pageMap.find(frameId) != pageMap.end()) {
+            lruList.erase(pageMap[frameId]);
+        }
+        lruList.push_front(frameId);
+        pageMap[frameId] = lruList.begin();
+        
+    }
+
+    size_t evictFrame() {
+        std::lock_guard<std::mutex> lock(lruMtx);
+        if (lruList.empty()) return -1;
+
+        size_t lruFrameId = lruList.back();
+        lruList.pop_back();
+        pageMap.erase(lruFrameId);
+        return lruFrameId;
+    }
+
+    void removeFrame(size_t frameId) {
+        std::lock_guard<std::mutex> lock(lruMtx);
+        if (pageMap.find(frameId) != pageMap.end()) {
+            lruList.erase(pageMap[frameId]);
+            pageMap.erase(frameId);
+        }
+    }
+    int getTotalFramesInRam() {
+        std::lock_guard<std::mutex> lock(lruMtx);
+        return lruList.size();
+    }
+
+private:
+    std::mutex lruMtx;
+    size_t maxFrames;
+    std::list<size_t> lruList;
+    std::unordered_map<size_t, std::list<size_t>::iterator> pageMap;
+};
+
 
 PagedMemoryAllocator* PagedMemoryAllocator::sharedInstance = nullptr;
 std::mutex PagedMemoryAllocator::mtx;
@@ -11,6 +56,7 @@ PagedMemoryAllocator::PagedMemoryAllocator(size_t totalMemory, size_t frameSize)
     currentAllocatedSize = 0;
     totalFrames = totalMemory / frameSize;
     frameTable.resize(totalFrames, false);
+    lruManager = new LRUManager(totalFrames);
 }
 
 void PagedMemoryAllocator::init(size_t totalMemory, size_t frameSize) {
@@ -19,14 +65,17 @@ void PagedMemoryAllocator::init(size_t totalMemory, size_t frameSize) {
         sharedInstance = new PagedMemoryAllocator(totalMemory, frameSize);
     }
 }
+
 PagedMemoryAllocator* PagedMemoryAllocator::getInstance() {
     return sharedInstance;
 }
+
 void* PagedMemoryAllocator::allocate(size_t size) {
-    std::lock_guard<std::mutex> lock(mtx); 
+    std::lock_guard<std::mutex> lock(mtx);
     if (size == 0 || size > (maximumSize - currentAllocatedSize)) {
         return nullptr;
     }
+
     size_t framesNeeded = (size + frameSize - 1) / frameSize;
     size_t freeFrames = 0;
     for (bool isOccupied : frameTable) {
@@ -44,6 +93,7 @@ void* PagedMemoryAllocator::allocate(size_t size) {
         if (!frameTable[i]) {
             frameTable[i] = true;
             pageTable->frameNumbers.push_back(i);
+            lruManager->accessPage(i);
         }
     }
 
@@ -61,41 +111,17 @@ void PagedMemoryAllocator::deallocate(void* ptr) {
     for (size_t frameIdx : pageTable->frameNumbers) {
         if (frameIdx < totalFrames) {
             frameTable[frameIdx] = false;
+
+            lruManager->removeFrame(frameIdx);
         }
     }
+
     currentAllocatedSize -= pageTable->frameNumbers.size() * frameSize;
 
     auto it = std::find(activeAllocations.begin(), activeAllocations.end(), pageTable);
     if (it != activeAllocations.end()) {
         activeAllocations.erase(it);
     }
+
     delete pageTable;
 }
-
-class LRUManager {
-public:
-    LRUManager(size_t maxFrames): maxFrames(maxFrames){}
-    void accessPage(int pageId) {
-        // Remove frame from its current position if it's already in pageMap
-        if (pageMap.find(pageId) != pageMap.end()) {
-            lruList.erase(pageMap[pageId]);
-        }
-
-        // Push frame to front as MRU
-        lruList.push_front(pageId);
-        pageMap[pageId] = lruList.begin();
-    }
-    int removeFrame() {
-        if (lruList.empty()) return -1; // Always guaranteed to return something, but just in case : <>
-
-        int lruFrameId = lruList.back();
-        lruList.pop_back();
-        pageMap.erase(lruFrameId);
-
-        return lruFrameId;
-    }
-private:
-    size_t maxFrames;
-    std::list<int> lruList; // Tracks the order of access
-    std::unordered_map<int, std::list<int>::iterator> pageMap; // Keeps all pages in RAM
-};
