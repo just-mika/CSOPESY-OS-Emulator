@@ -393,6 +393,7 @@ static std::string formatSnapshotTime(std::time_t t) {
 	return ss.str();
 }
 
+/*
 void GlobalScheduler::generateMemLog(int cpuCycles) {
 	std::string DIRECTORY_PATH = "output/mem_snapshots/";
 
@@ -425,4 +426,5 @@ void GlobalScheduler::generateMemLog(int cpuCycles) {
 	else {
 		std::cerr << "[Memory Logger] Unable to initialize file at: " << fullFilePath << std::endl;
 	}
-}
+
+}*/

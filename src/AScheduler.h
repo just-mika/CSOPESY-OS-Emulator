@@ -61,5 +61,5 @@ protected:
     std::list<std::shared_ptr<Process>> sleepingProcesses;
     std::deque<std::shared_ptr<Process>> memoryQueue;
     std::unordered_map<int, std::shared_ptr<Process>> processTable;
-    std::shared_ptr<PagedMemoryAllocator> memoryAllocator;
+    std::shared_ptr<IMemoryAllocator> memoryAllocator;
 };

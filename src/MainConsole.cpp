@@ -482,6 +482,7 @@ void MainConsole::displayProcessSMI() const {
 
 }
 
+
 void GlobalScheduler::generateMemLog(int cpuCycles) {
 	std::string DIRECTORY_PATH = "output/mem_snapshots/";
 
