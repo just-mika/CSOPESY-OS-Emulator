@@ -107,15 +107,3 @@ std::deque<std::shared_ptr<Process>> AScheduler::getRunningProcesses()
     std::shared_lock lock(mutex);
     return runningProcesses;
 }
-std::string AScheduler::getMemoryUse() {
-    std::shared_lock lock(mutex);
-    int totalMemory = 0;
-    for (const auto& p : runningProcesses) {
-        totalMemory = p->getMemoryRequired();
-    }
-    int percent = (totalMemory * 100) / maxOverallMem;
-    std::string memoryUsage = "Memory Usage: " + std::to_string(totalMemory) + "MiB / " + std::to_string(maxOverallMem) + "MiB\n";
-    memoryUsage += "Memory Util: " + std::to_string(percent) + "%";
-
-    return memoryUsage;
-}

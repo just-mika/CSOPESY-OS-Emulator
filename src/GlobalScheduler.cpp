@@ -422,6 +422,58 @@ void GlobalScheduler::displayVMStat()
 	std::cout << std::left << std::setw(24) << "Num paged out:" << pagedOut << "\n";
 	std::cout << "==================================================\n\n";
 }
+
+void GlobalScheduler::displayProcessSMI() {
+	std::shared_lock lock(mutex);
+
+	int totalCores = static_cast<int>(workers.size());
+	int activeCores = 0;
+	for (const auto& w : workers) {
+		if (!w->isFree()) activeCores++;
+	}
+	int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
+
+	size_t used = 0;
+	for (const auto& p : runningProcesses) {
+		auto* pt = static_cast<PageTable*>(p->getMemoryAddress());
+		if (pt) used += memoryAllocator->getResidentMemory(pt);
+	}
+	for (const auto& p : readyQueue) {
+		auto* pt = static_cast<PageTable*>(p->getMemoryAddress());
+		if (pt) used += memoryAllocator->getResidentMemory(pt);
+	}
+	size_t total = maxOverallMem;
+	int memUtil = (total > 0) ? static_cast<int>((used * 100) / total) : 0;
+
+	std::cout << "\n--------------------------------------------------\n";
+	std::cout << "PROCESS-SMI\n";
+	std::cout << "--------------------------------------------------\n";
+	std::cout << "CPU Utilization: " << cpuUtil << "%\n";
+	std::cout << "Memory Usage: " << used << " B / " << total << " B\n";
+	std::cout << "Memory Util: " << memUtil << "%\n";
+	std::cout << "--------------------------------------------------\n";
+	std::cout << "Running Processes and Memory Usage\n";
+	std::cout << "--------------------------------------------------\n";
+
+	bool any = false;
+	for (const auto& p : runningProcesses) {
+		auto* pt = static_cast<PageTable*>(p->getMemoryAddress());
+		if (!pt) continue;
+		std::cout << p->getName() << " " << memoryAllocator->getResidentMemory(pt) << "\n";
+		any = true;
+	}
+	for (const auto& p : readyQueue) {
+		auto* pt = static_cast<PageTable*>(p->getMemoryAddress());
+		if (!pt) continue;
+		std::cout << p->getName() << " " << memoryAllocator->getResidentMemory(pt) << "\n";
+		any = true;
+	}
+	if (!any) {
+		std::cout << "No running processes\n";
+	}
+
+	std::cout << "--------------------------------------------------\n";
+}
 /*
 void GlobalScheduler::generateMemLog(int cpuCycles) {
 	std::string DIRECTORY_PATH = "output/mem_snapshots/";

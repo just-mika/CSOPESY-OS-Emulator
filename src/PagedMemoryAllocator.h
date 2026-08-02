@@ -46,7 +46,9 @@ public:
         for (bool occupied : frameTable) if (occupied) allocatedFrames++;
         return allocatedFrames * frameSize;
     }
-
+    size_t getTotalMemory() const {
+        return maximumSize;
+    }
     size_t getFreeMemory() const {
         return maximumSize - getUsedMemory();
     }
@@ -81,6 +83,7 @@ public:
     uint8_t* getFramePointer(size_t frameIndex) {
         return &physicalMemory[frameIndex * frameSize];
     }
+    size_t getResidentMemory(PageTable* pt) const;
 
 private:
     PagedMemoryAllocator(size_t totalMemory, size_t frameSize, const std::string& backingStoreFile);

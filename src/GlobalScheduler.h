@@ -21,6 +21,7 @@ public:
     bool isInitialized();
     bool hasStarted();
     void displayVMStat();
+    void displayProcessSMI();
     friend class CPUWorker;
 
 private:

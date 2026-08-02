@@ -356,7 +356,7 @@ void MainConsole::handleCommand(const std::string& input) {
             std::cout << "Config not initialized yet.\n";
         } 
         else {
-            displayProcessSMI();
+            GlobalScheduler::getInstance()->displayProcessSMI();
         }
     }
     else if (command == "vmstat") {
@@ -466,34 +466,6 @@ void MainConsole::displayScreenLS() const
     lock.unlock();
     std::cout << "--------------------------------------------------\n";
 }
-
-void MainConsole::displayProcessSMI() const {
-    auto [activeCores, totalCores] = getActiveAndTotalCores();
-    std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
-
-    int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
-    std::string usedMemory = GlobalScheduler::getInstance()->getMemoryUse();
-    std::cout << "\n--------------------------------------------------\n";
-    std::cout << "\PROCESS-SMI\n";
-    std::cout << "--------------------------------------------------\n";
-    std::cout << "CPU Utilization: " << cpuUtil << "%\n";
-    std::cout << usedMemory << "\n";
-    std::cout << "--------------------------------------------------\n";
-    std::cout << "Running Processes and Memory Usage\n";
-    std::cout << "--------------------------------------------------\n";
-    std::deque<std::shared_ptr<Process>> runningProcesses = GlobalScheduler::getInstance()->getRunningProcesses();
-    if (!runningProcesses.empty()) {
-        for (const auto& p : runningProcesses) {
-            std::cout << p->getName() << " " << p->getMemoryRequired() << "\n";
-        }
-    }
-    else {
-        std::cout << "No running processes\n";
-    }
-    std::cout << "--------------------------------------------------\n";
-
-}
-
 
 void GlobalScheduler::generateMemLog(int cpuCycles) {
 	std::string DIRECTORY_PATH = "output/mem_snapshots/";

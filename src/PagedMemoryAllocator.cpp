@@ -250,3 +250,13 @@ void PagedMemoryAllocator::evictPage(size_t frameIndex) {
     frameTable[frameIndex] = false;
     frameOwner.erase(it);
 }
+
+size_t PagedMemoryAllocator::getResidentMemory(PageTable* pt) const {
+    std::lock_guard<std::mutex> lock(mtx);
+    if (!pt) return 0;
+    size_t resident = 0;
+    for (const auto& e : pt->entries) {
+        if (e.isValid) resident++;
+    }
+    return resident * frameSize;
+}

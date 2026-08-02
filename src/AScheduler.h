@@ -29,7 +29,6 @@ public:
     static SchedulingAlgorithm parseAlgorithm(std::string algo);
     std::deque<std::shared_ptr<Process>> getFinishedProcesses();
     std::deque<std::shared_ptr<Process>> getRunningProcesses();
-    std::string getMemoryUse();
     std::shared_ptr<Process> findProcess(int pid);
     void checkMemoryBlockedQueue();
     void removeProcess(int pid);
