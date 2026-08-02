@@ -13,4 +13,5 @@ public:
 private:
     void handleCommand(const std::string& input);
     void displayScreenLS() const;
+    void displayProcessSMI() const;
 };

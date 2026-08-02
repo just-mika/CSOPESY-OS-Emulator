@@ -203,11 +203,9 @@ void GlobalScheduler::init(Config config) {
 		sharedInstance = new GlobalScheduler(config);
 	}
 	
-
 	// Initialize Memory Allocator First
 	PagedMemoryAllocator::init(config.maxOverallMem, config.memPerFrame, fileName);
 	sharedInstance->memoryAllocator = std::shared_ptr<IMemoryAllocator>(PagedMemoryAllocator::getInstance(), [](IMemoryAllocator*) {});
-
 
 	// Start the Workers
 	sharedInstance->startWorkers();

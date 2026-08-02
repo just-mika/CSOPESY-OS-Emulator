@@ -7,7 +7,7 @@
 #include "Process.h"
 #include "OSThread.h"
 #include "Config.h"
-#include "IMemoryAllocator.h"
+#include "PagedMemoryAllocator.h"
 
 enum SchedulingAlgorithm
 {
@@ -29,10 +29,12 @@ public:
     static SchedulingAlgorithm parseAlgorithm(std::string algo);
     std::deque<std::shared_ptr<Process>> getFinishedProcesses();
     std::deque<std::shared_ptr<Process>> getRunningProcesses();
+    std::string getMemoryUse();
     std::shared_ptr<Process> findProcess(int pid);
     void checkMemoryBlockedQueue();
     void removeProcess(int pid);
     mutable std::shared_mutex mutex;
+    
 
 protected:
     SchedulingAlgorithm algo;
@@ -59,5 +61,5 @@ protected:
     std::list<std::shared_ptr<Process>> sleepingProcesses;
     std::deque<std::shared_ptr<Process>> memoryQueue;
     std::unordered_map<int, std::shared_ptr<Process>> processTable;
-    std::shared_ptr<IMemoryAllocator> memoryAllocator;
+    std::shared_ptr<PagedMemoryAllocator> memoryAllocator;
 };
