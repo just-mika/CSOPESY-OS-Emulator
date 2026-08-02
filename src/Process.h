@@ -41,11 +41,10 @@ class Process
 		std::shared_ptr<std::vector<std::string>> printLogs; 
 		void saveLog(std::string printedString);
 		std::stack<LoopFrame> loopStack;
+
+		// Memory management
 		void* memoryAddress = nullptr;		// Pointer to the allocated memory block for this process (if any)
 		size_t memoryRequired;
-
-		// Virtual memory representation for the process
-		std::vector<uint8_t> virtualMemory;
 		bool accessViolation = false;
 		uint32_t invalidAddress = 0;
 		std::string violationTimestamp;

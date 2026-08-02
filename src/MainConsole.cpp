@@ -5,6 +5,9 @@
 #include <cctype>
 #include <algorithm>
 #include "MainConsole.h"
+
+#include <filesystem>
+
 #include "Config.h"
 #include "ConsoleManager.h"
 #include "GlobalScheduler.h"
@@ -13,6 +16,8 @@
 
 void printHeader();
 void printCommand();
+std::pair<int, int> getActiveAndTotalCores();
+void cleanUpOutput();
 
 namespace {
     // trims leading/trailing whitespace
@@ -104,7 +109,11 @@ void MainConsole::handleCommand(const std::string& input) {
         if (GlobalScheduler::getInstance() != nullptr) {
             GlobalScheduler::getInstance()->stop();
         }
+
+        //output cleanup
+        //cleanUpOutput();
         ConsoleManager::getInstance()->exitApplication();
+
     }
     else if (command == "clear") {
         system("cls");
@@ -471,4 +480,38 @@ void MainConsole::displayProcessSMI() const {
     }
     std::cout << "--------------------------------------------------\n";
 
+}
+
+void GlobalScheduler::generateMemLog(int cpuCycles) {
+	std::string DIRECTORY_PATH = "output/mem_snapshots/";
+
+	try {
+		if (!std::filesystem::exists(DIRECTORY_PATH)) {
+			std::filesystem::create_directories(DIRECTORY_PATH);
+		}
+	}
+	catch (const std::filesystem::filesystem_error& e) {
+		std::cerr << "[Logger Error] Directory creation failed: " << e.what() << std::endl;
+	}
+
+	std::string fullFilePath = DIRECTORY_PATH + "memory_stamp_" + std::to_string(cpuCycles) + ".txt";
+	std::ofstream outFile(fullFilePath, std::ios::out);
+
+	if (outFile.is_open()) {
+		std::time_t now = std::time(nullptr);
+		std::tm timeInfo{};
+#ifdef _WIN32
+		localtime_s(&timeInfo, &now);
+#else
+		localtime_r(&now, &timeInfo);
+#endif
+
+		outFile << "Timestamp: (" << std::put_time(&timeInfo, "%m/%d/%Y %I:%M:%S %p") << ")\n";
+		outFile << "CPU Cycle: " << cpuCycles << "\n\n";
+		outFile << PagedMemoryAllocator::getInstance()->visualizeMemory();
+		outFile.close();
+	}
+	else {
+		std::cerr << "[Memory Logger] Unable to initialize file at: " << fullFilePath << std::endl;
+	}
 }

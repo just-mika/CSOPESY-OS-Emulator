@@ -180,6 +180,7 @@
     <ClInclude Include="src\GlobalScheduler.h" />
     <ClInclude Include="src\ICommand.h" />
     <ClInclude Include="src\IMemoryAllocator.h" />
+    <ClInclude Include="src\LRUManager.h" />
     <ClInclude Include="src\MainConsole.h" />
     <ClInclude Include="src\MathCommand.h" />
     <ClInclude Include="src\OSThread.h" />
