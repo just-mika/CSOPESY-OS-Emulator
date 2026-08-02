@@ -17,6 +17,7 @@ struct PageEntry {
     int frameNumber = -1;
     bool isValid = false;
     bool isDirty = false;
+    bool isPinned = false;   // set while a read/write is in flight so selectVictim skips it
 };
 
 struct PageTable {
@@ -39,7 +40,19 @@ public:
     size_t getNumPagedIn() const { return numPagedIn; }
     size_t getNumPagedOut() const { return numPagedOut; }
 
+    size_t getUsedMemory() const {
+        std::lock_guard<std::mutex> lock(mtx);
+        size_t allocatedFrames = 0;
+        for (bool occupied : frameTable) if (occupied) allocatedFrames++;
+        return allocatedFrames * frameSize;
+    }
+
+    size_t getFreeMemory() const {
+        return maximumSize - getUsedMemory();
+    }
+
     std::string visualizeMemory() override {
+        std::lock_guard<std::mutex> lock(mtx);
         std::ostringstream oss;
         size_t allocatedFrames = 0;
         for (bool occupied : frameTable) if (occupied) allocatedFrames++;
@@ -56,25 +69,29 @@ public:
         return oss.str();
     }
 
+    uint16_t readWord(PageTable* pt, size_t addr);
+    void writeWord(PageTable* pt, size_t addr, uint16_t value);
+
+    size_t getFrameSize() const { return frameSize; }
+
     void ensurePageResident(PageTable* pt, size_t pageIndex) {
+        std::lock_guard<std::mutex> lock(mtx);
         handlePageFault(pt, pageIndex);
     }
     uint8_t* getFramePointer(size_t frameIndex) {
         return &physicalMemory[frameIndex * frameSize];
     }
-    size_t getFrameSize() const { return frameSize; }
-
 
 private:
     PagedMemoryAllocator(size_t totalMemory, size_t frameSize, const std::string& backingStoreFile);
-    static PagedMemoryAllocator* sharedInstance; 
+    static PagedMemoryAllocator* sharedInstance;
     static std::mutex mtx;
     size_t frameSize;
     size_t totalFrames;
     std::vector<bool> frameTable;
     std::vector<PageTable*> activeAllocations;
 
-    //for demand paging
+    // for demand paging
     std::vector<uint8_t> physicalMemory;
     LRUManager lruManager;
     size_t numPagedIn = 0;

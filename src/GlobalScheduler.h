@@ -20,6 +20,7 @@ public:
 
     bool isInitialized();
     bool hasStarted();
+    void displayVMStat();
     friend class CPUWorker;
 
 private:
@@ -29,6 +30,8 @@ private:
     void tick();
     void startWorkers();
     void run() override;
+    uint64_t activeCpuTicks = 0;
+    uint64_t idleCpuTicks = 0;
     static GlobalScheduler* sharedInstance;
     std::vector<std::shared_ptr<CPUWorker>> workers;
     std::shared_ptr<AScheduler> scheduler;

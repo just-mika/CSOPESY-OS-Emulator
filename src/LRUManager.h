@@ -1,27 +1,27 @@
-
+#pragma once
 #include <list>
 #include <unordered_map>
 
 class LRUManager {
 public:
     LRUManager(size_t maxFrames = 0) : maxFrames(maxFrames) {}
-    void accessPage(int pageId) {
-        // Remove frame from its current position if it's already in pageMap
-        if (pageMap.find(pageId) != pageMap.end()) {
-            lruList.erase(pageMap[pageId]);
-        }
 
-        // Push frame to front as MRU
+    void accessPage(int pageId) {
+        // Remove from its current position if already tracked
+        auto it = pageMap.find(pageId);
+        if (it != pageMap.end()) {
+            lruList.erase(it->second);
+        }
+        // Push to front as MRU
         lruList.push_front(pageId);
         pageMap[pageId] = lruList.begin();
     }
-    int removeFrame() {
-        if (lruList.empty()) return -1; // Always guaranteed to return something, but just in case : <>
 
+    int removeFrame() {
+        if (lruList.empty()) return -1;
         int lruFrameId = lruList.back();
         lruList.pop_back();
         pageMap.erase(lruFrameId);
-
         return lruFrameId;
     }
 
@@ -32,8 +32,9 @@ public:
             pageMap.erase(it);
         }
     }
+
 private:
     size_t maxFrames;
-    std::list<int> lruList; // Tracks the order of access
-    std::unordered_map<int, std::list<int>::iterator> pageMap; // Keeps all pages in RAM
+    std::list<int> lruList;                                  // access order (front = MRU)
+    std::unordered_map<int, std::list<int>::iterator> pageMap;
 };

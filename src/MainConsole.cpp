@@ -352,9 +352,21 @@ void MainConsole::handleCommand(const std::string& input) {
         }
     }
     else if (command == "process-smi") {
-        displayProcessSMI();
+        if (GlobalScheduler::getInstance() == nullptr) {
+            std::cout << "Config not initialized yet.\n";
+        } 
+        else {
+            displayProcessSMI();
+        }
     }
     else if (command == "vmstat") {
+        if (GlobalScheduler::getInstance() == nullptr) {
+            std::cout << "Config not initialized yet.\n";
+        }
+        else {
+            GlobalScheduler::getInstance()->displayVMStat();
+        }
+
 
     }
     else std::cout << "Unknown command: " << input << std::endl;

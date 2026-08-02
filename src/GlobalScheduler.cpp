@@ -124,9 +124,10 @@ void GlobalScheduler::updateWorkers()
 {
 	for (auto& worker : workers) {
 		if (worker->isFree()) {
+			idleCpuTicks++;
 			continue; // Safely skip free workers
 		}
-
+		activeCpuTicks++;
 		auto currentProc = worker->getCurrentProcess();
 
 		if (currentProc->isFinished()) {
@@ -205,7 +206,7 @@ void GlobalScheduler::init(Config config) {
 	
 	// Initialize Memory Allocator First
 	PagedMemoryAllocator::init(config.maxOverallMem, config.memPerFrame, fileName);
-	sharedInstance->memoryAllocator = std::shared_ptr<IMemoryAllocator>(PagedMemoryAllocator::getInstance(), [](IMemoryAllocator*) {});
+	sharedInstance->memoryAllocator = std::shared_ptr<PagedMemoryAllocator>(PagedMemoryAllocator::getInstance(), [](IMemoryAllocator*) {});
 
 	// Start the Workers
 	sharedInstance->startWorkers();
@@ -392,7 +393,35 @@ static std::string formatSnapshotTime(std::time_t t) {
 	ss << std::put_time(&tm_struct, "%m/%d/%Y %I:%M:%S%p");
 	return ss.str();
 }
+void GlobalScheduler::displayVMStat()
+{
+	if (memoryAllocator == nullptr) return;
+	size_t totalMem = maxOverallMem;
+	size_t usedMem = memoryAllocator->getUsedMemory();
+	size_t freeMem = memoryAllocator->getFreeMemory();
 
+	uint64_t activeTicks = activeCpuTicks;
+	uint64_t idleTicks = idleCpuTicks;
+	uint64_t totalTicks = activeTicks + idleTicks;
+
+	size_t pagedIn = memoryAllocator->getNumPagedIn();
+	size_t pagedOut = memoryAllocator->getNumPagedOut();
+
+	std::cout << "\n==================================================\n";
+	std::cout << "                 VIRTUAL MEMORY STATS             \n";
+	std::cout << "==================================================\n";
+	std::cout << std::left << std::setw(24) << "Total memory:" << totalMem << " bytes\n";
+	std::cout << std::left << std::setw(24) << "Used memory:" << usedMem << " bytes\n";
+	std::cout << std::left << std::setw(24) << "Free memory:" << freeMem << " bytes\n";
+	std::cout << "--------------------------------------------------\n";
+	std::cout << std::left << std::setw(24) << "Idle CPU ticks:" << idleTicks << "\n";
+	std::cout << std::left << std::setw(24) << "Active CPU ticks:" << activeTicks << "\n";
+	std::cout << std::left << std::setw(24) << "Total CPU ticks:" << totalTicks << "\n";
+	std::cout << "--------------------------------------------------\n";
+	std::cout << std::left << std::setw(24) << "Num paged in:" << pagedIn << "\n";
+	std::cout << std::left << std::setw(24) << "Num paged out:" << pagedOut << "\n";
+	std::cout << "==================================================\n\n";
+}
 /*
 void GlobalScheduler::generateMemLog(int cpuCycles) {
 	std::string DIRECTORY_PATH = "output/mem_snapshots/";

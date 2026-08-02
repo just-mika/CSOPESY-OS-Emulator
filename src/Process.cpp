@@ -376,77 +376,25 @@ std::string Process::getAccessViolationMessage() const {
 }
 
 uint16_t Process::readMemory(uint32_t addr) {
-	//std::cout << "readMemory called, addr=" << addr << "\n";
 	if (!isValidAddress(addr)) {
 		triggerAccessViolation(addr);
 		return 0;
 	}
 
 	auto* allocator = PagedMemoryAllocator::getInstance();
-	size_t frameSize = allocator->getFrameSize();
 	auto* pageTable = static_cast<PageTable*>(memoryAddress);
-
-	size_t pageIndex = addr / frameSize;
-	size_t offset = addr % frameSize;
-
-	allocator->ensurePageResident(pageTable, pageIndex);
-
-	PageEntry& entry = pageTable->entries[pageIndex];
-	uint8_t* frame = allocator->getFramePointer(entry.frameNumber);
-
-	// Handle the (rare) case where addr+1 crosses into the next page
-	uint16_t value;
-	if (offset + 1 < frameSize) {
-		value = static_cast<uint16_t>(frame[offset]) |
-			(static_cast<uint16_t>(frame[offset + 1]) << 8);
-	}
-	else {
-		size_t nextPageIndex = pageIndex + 1;
-		allocator->ensurePageResident(pageTable, nextPageIndex);
-		PageEntry& nextEntry = pageTable->entries[nextPageIndex];
-		uint8_t* nextFrame = allocator->getFramePointer(nextEntry.frameNumber);
-		value = static_cast<uint16_t>(frame[offset]) |
-			(static_cast<uint16_t>(nextFrame[0]) << 8);
-	}
-
-	return value;
+	return allocator->readWord(pageTable, addr);
 }
 
 void Process::writeMemory(uint32_t addr, uint16_t value) {
-	//std::cout << "writeMemory called, addr=" << addr << "\n";
 	if (!isValidAddress(addr)) {
 		triggerAccessViolation(addr);
 		return;
 	}
 
 	auto* allocator = PagedMemoryAllocator::getInstance();
-	size_t frameSize = allocator->getFrameSize();
 	auto* pageTable = static_cast<PageTable*>(memoryAddress);
-
-	size_t pageIndex = addr / frameSize;
-	size_t offset = addr % frameSize;
-
-	allocator->ensurePageResident(pageTable, pageIndex);
-
-	PageEntry& entry = pageTable->entries[pageIndex];
-	uint8_t* frame = allocator->getFramePointer(entry.frameNumber);
-
-	if (offset + 1 < frameSize) {
-		frame[offset] = static_cast<uint8_t>(value & 0xFF);
-		frame[offset + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);
-		entry.isDirty = true;
-	}
-	else {
-		size_t nextPageIndex = pageIndex + 1;
-		allocator->ensurePageResident(pageTable, nextPageIndex);
-		PageEntry& nextEntry = pageTable->entries[nextPageIndex];
-		uint8_t* nextFrame = allocator->getFramePointer(nextEntry.frameNumber);
-
-		frame[offset] = static_cast<uint8_t>(value & 0xFF);
-		nextFrame[0] = static_cast<uint8_t>((value >> 8) & 0xFF);
-		entry.isDirty = true;
-		nextEntry.isDirty = true;
-	}
+	allocator->writeWord(pageTable, addr, value);
 }
 
 size_t Process::getMemoryRequired() const {
