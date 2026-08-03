@@ -13,6 +13,7 @@ public:
     static void init(Config config);
     std::shared_ptr<Process> createUniqueProcess(std::string name, size_t memoryRequired, bool generateRandomCommands = true);
     std::shared_ptr<Process> createUniqueProcess(std::string name);
+    std::shared_ptr<Process> createUniqueProcess(std::string name, bool generateRandomCommands = true);
     std::vector<std::shared_ptr<CPUWorker>> getWorkers();
     void generateReport();
     void setGenerating(bool generating);

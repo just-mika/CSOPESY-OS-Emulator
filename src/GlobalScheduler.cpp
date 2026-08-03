@@ -257,6 +257,11 @@ std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name)
 	return createUniqueProcess(name, AScheduler::rollMemSize(), true);
 }
 
+std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name, bool generateRandomCommands)
+{
+	return createUniqueProcess(name, AScheduler::rollMemSize(), generateRandomCommands);
+}
+
 std::vector<std::shared_ptr<CPUWorker>> GlobalScheduler::getWorkers()
 {
 	return workers;
