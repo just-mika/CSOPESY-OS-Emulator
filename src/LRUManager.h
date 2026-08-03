@@ -7,6 +7,7 @@ class LRUManager {
 public:
     LRUManager(size_t maxFrames = 0) : maxFrames(maxFrames) {}
 
+	// Mark a frame as recently used (most-recently-used)
     void touch(size_t frameIndex) {
         auto it = frameMap.find(frameIndex);
         if (it != frameMap.end()) order.erase(it->second);
@@ -14,6 +15,8 @@ public:
         frameMap[frameIndex] = order.begin();
     }
 
+	// Remove the least-recently-used frame
+	// return its index, or -1 if empty
     long long removeLRU() {
         if (order.empty()) return -1;
         size_t lru = order.back();
@@ -22,8 +25,7 @@ public:
         return static_cast<long long>(lru);
     }
 
-    void requeueAsMRU(size_t frameIndex) { touch(frameIndex); }
-
+	// Remove a specific frame from the LRU tracking
     void remove(size_t frameIndex) {
         auto it = frameMap.find(frameIndex);
         if (it != frameMap.end()) {
@@ -32,6 +34,11 @@ public:
         }
     }
 
+
+    // Requeue a frame as most-recently-used
+    void requeueAsMRU(size_t frameIndex) { touch(frameIndex); }
+
+	// Check if the LRU list is empty
     bool empty() const { return order.empty(); }
 
 private:
