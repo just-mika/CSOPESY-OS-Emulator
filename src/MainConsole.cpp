@@ -153,9 +153,6 @@ void MainConsole::handleCommand(const std::string& input) {
                 else if (GlobalScheduler::getInstance() != nullptr) {
                     auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
                     if (process == nullptr) {
-                        // NOTE for Member 3: for createUniqueProcess 
-                        // Process(pid, name, memoryRequired) is constructed with memSize
-                        // already validated against [2^6, 2^16] above
                         process = GlobalScheduler::getInstance()->createUniqueProcess(args[1], memSize, true);
                     }
                     auto screen = std::make_shared<BaseScreen>(process, args[1]);
