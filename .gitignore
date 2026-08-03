@@ -430,3 +430,4 @@ FodyWeavers.xsd
 .vscode/tasks.json
 /output
 csopesy-log.txt
+csopesy-backing-store.txt
