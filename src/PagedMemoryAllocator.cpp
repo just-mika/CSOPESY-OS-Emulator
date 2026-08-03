@@ -39,10 +39,6 @@ void* PagedMemoryAllocator::allocate(size_t size, int pid) {
 
     size_t pagesNeeded = (size + frameSize - 1) / frameSize;
 
-    size_t freeFrames = 0;
-    for (bool occupied : frameTable) if (!occupied) freeFrames++;
-    if (freeFrames == 0) return nullptr;
-
     auto* pageTable = new PageTable();
     pageTable->requestedSize = size;
     pageTable->pid = pid;
@@ -81,27 +77,23 @@ void PagedMemoryAllocator::deallocate(void* ptr) {
 
 uint16_t PagedMemoryAllocator::readWord(PageTable* pt, size_t addr) {
     std::lock_guard<std::mutex> lock(mtx);
-
     size_t pageIndex = addr / frameSize;
     size_t offset = addr % frameSize;
-
     int f = handlePageFault(pt, pageIndex);
-    if (f < 0) return 0;
+    if (f < 0)  return 0; 
     pt->entries[pageIndex].isPinned = true;
 
     uint8_t lo = physicalMemory[(size_t)f * frameSize + offset];
-
     uint8_t hi = 0;
     if (offset + 1 < frameSize) {
         hi = physicalMemory[(size_t)f * frameSize + offset + 1];
     }
     else {
         int f2 = handlePageFault(pt, pageIndex + 1);
-        if (f2 >= 0) {
-            pt->entries[pageIndex + 1].isPinned = true;
-            hi = physicalMemory[(size_t)f2 * frameSize + 0];
-            pt->entries[pageIndex + 1].isPinned = false;
-        }
+        if (f2 < 0) { pt->entries[pageIndex].isPinned = false; return 0; }
+        pt->entries[pageIndex + 1].isPinned = true;
+        hi = physicalMemory[(size_t)f2 * frameSize + 0];
+        pt->entries[pageIndex + 1].isPinned = false;
     }
 
     pt->entries[pageIndex].isPinned = false;
@@ -110,10 +102,8 @@ uint16_t PagedMemoryAllocator::readWord(PageTable* pt, size_t addr) {
 
 void PagedMemoryAllocator::writeWord(PageTable* pt, size_t addr, uint16_t value) {
     std::lock_guard<std::mutex> lock(mtx);
-
     size_t pageIndex = addr / frameSize;
     size_t offset = addr % frameSize;
-
     int f = handlePageFault(pt, pageIndex);
     if (f < 0) return;
     pt->entries[pageIndex].isPinned = true;
@@ -126,19 +116,18 @@ void PagedMemoryAllocator::writeWord(PageTable* pt, size_t addr, uint16_t value)
     }
     else {
         int f2 = handlePageFault(pt, pageIndex + 1);
-        if (f2 >= 0) {
-            pt->entries[pageIndex + 1].isPinned = true;
-            physicalMemory[(size_t)f2 * frameSize + 0] = static_cast<uint8_t>((value >> 8) & 0xFF);
-            pt->entries[pageIndex + 1].isDirty = true;
-            pt->entries[pageIndex + 1].isPinned = false;
-        }
+        if (f2 < 0) { pt->entries[pageIndex].isPinned = false; return; }
+        pt->entries[pageIndex + 1].isPinned = true;
+        physicalMemory[(size_t)f2 * frameSize + 0] = static_cast<uint8_t>((value >> 8) & 0xFF);
+        pt->entries[pageIndex + 1].isDirty = true;
+        pt->entries[pageIndex + 1].isPinned = false;
     }
 
     pt->entries[pageIndex].isPinned = false;
 }
 
 int PagedMemoryAllocator::handlePageFault(PageTable* pt, size_t pageIndex) {
-    PageEntry& entry = pt->entries[pageIndex];
+	PageEntry& entry = pt->entries[pageIndex];
 
     if (entry.isValid) {
         lruManager.touch((size_t)entry.frameNumber);

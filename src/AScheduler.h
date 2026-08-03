@@ -29,8 +29,9 @@ public:
     static SchedulingAlgorithm parseAlgorithm(std::string algo);
     std::deque<std::shared_ptr<Process>> getFinishedProcesses();
     std::deque<std::shared_ptr<Process>> getRunningProcesses();
+    unsigned long long getMinMemPerProc();
     std::shared_ptr<Process> findProcess(int pid);
-    void checkMemoryBlockedQueue();
+    void admitFromMemoryQueue();
     void removeProcess(int pid);
     mutable std::shared_mutex mutex;
     
@@ -48,6 +49,7 @@ protected:
     unsigned long long memPerFrame;
     unsigned long long minMemPerProc;
     unsigned long long maxMemPerProc;
+    size_t rollMemSize();
 
     
     int cpuCycles = 0;

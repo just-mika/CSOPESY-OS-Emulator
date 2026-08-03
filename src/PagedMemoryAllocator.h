@@ -73,10 +73,11 @@ public:
 
     size_t getFrameSize() const { return frameSize; }
 
-    void ensurePageResident(PageTable* pt, size_t pageIndex) {
+    int ensurePageResident(PageTable* pt, size_t pageIndex) {
         std::lock_guard<std::mutex> lock(mtx);
-        handlePageFault(pt, pageIndex);
+        return handlePageFault(pt, pageIndex);   // -1 on failure, frame number on success
     }
+
     uint8_t* getFramePointer(size_t frameIndex) {
         return &physicalMemory[frameIndex * frameSize];
     }

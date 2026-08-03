@@ -21,6 +21,11 @@ BackingStore::~BackingStore() {
 bool BackingStore::read_page(int pageId, void* buffer) {
     if (!file.is_open()) return false;
 
+    if (writtenSlots.find(pageId) == writtenSlots.end()) {
+        std::memset(buffer, 0, pageSize);
+        return true;
+    }
+
     size_t recordWidth = pageSize * 2 + 1;
     std::streampos offset = (std::streampos)pageId * recordWidth;
     file.seekg(offset);
@@ -36,7 +41,15 @@ bool BackingStore::read_page(int pageId, void* buffer) {
 
     uint8_t* out = static_cast<uint8_t*>(buffer);
     for (size_t i = 0; i < pageSize; i++) {
-        out[i] = (uint8_t)std::stoi(hexLine.substr(i * 2, 2), nullptr, 16);
+        try {
+            out[i] = (uint8_t)std::stoi(hexLine.substr(i * 2, 2), nullptr, 16);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "BAD HEX at pageId=" << pageId << " byte=" << i
+                << " raw=\"" << hexLine.substr(i * 2, 2) << "\"\n";
+            std::memset(buffer, 0, pageSize);
+            return true;
+        }
     }
     return true;
 }
@@ -44,7 +57,6 @@ bool BackingStore::read_page(int pageId, void* buffer) {
 
 bool BackingStore::write_page(int pageId, const void* buffer) {
     if (!file.is_open()) {
-     //   std::cout << "[BACKING STORE] write_page FAILED: file not open\n";
         return false;
     }
 
@@ -63,7 +75,6 @@ bool BackingStore::write_page(int pageId, const void* buffer) {
     file.flush();
 
     bool success = file.good();
-    //std::cout << "[BACKING STORE] write_page pageId=" << pageId
-    //    << " offset=" << offset << " success=" << success << "\n";
+    if (success) writtenSlots.insert(pageId);
     return success;
 }

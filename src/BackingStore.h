@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <fstream>
+#include <unordered_set>
 
 class BackingStore {
 public:
@@ -13,4 +14,5 @@ public:
 private:
 	std::fstream file;
 	size_t pageSize;
+	std::unordered_set<int> writtenSlots;;
 };

@@ -34,7 +34,7 @@ void GlobalScheduler::run()
 
 		updateWorkers();
 		updateSleepingProcesses();
-		checkMemoryBlockedQueue();
+		admitFromMemoryQueue();
 
 		if (algo == SchedulingAlgorithm::FCFS) {
 			runFCFS();
@@ -146,7 +146,7 @@ void GlobalScheduler::updateWorkers()
 			lock.unlock();
 			worker->assignProcess(nullptr); // Free the worker
 
-			checkMemoryBlockedQueue();
+			admitFromMemoryQueue();
 		}
 		// handle WAITING state (triggered by SLEEP(X)); do not include unallocated processes
 		else if (currentProc->getState() == ProcessState::WAITING && currentProc->getMemoryAddress() != nullptr) {
@@ -190,7 +190,7 @@ void GlobalScheduler::updateSleepingProcesses()
 		}
 	}
 	lock.unlock();
-	checkMemoryBlockedQueue();
+	admitFromMemoryQueue();
 }
 
 GlobalScheduler* GlobalScheduler::getInstance()
@@ -254,8 +254,7 @@ std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name, 
 
 std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name)
 {
-	// Default 1-argument overload using min memory requirement for process creation
-	return createUniqueProcess(name, AScheduler::minMemPerProc, true);
+	return createUniqueProcess(name, AScheduler::rollMemSize(), true);
 }
 
 std::vector<std::shared_ptr<CPUWorker>> GlobalScheduler::getWorkers()
@@ -287,7 +286,7 @@ std::shared_ptr<Process> GlobalScheduler::generateProcess()
 
 	size_t rolledMem = AScheduler::minMemPerProc;
 	if (AScheduler::maxMemPerProc > AScheduler::minMemPerProc) {
-		rolledMem = AScheduler::minMemPerProc + (rand() % (AScheduler::maxMemPerProc - AScheduler::minMemPerProc + 1));
+		rolledMem = rollMemSize();
 	}
 
 	std::shared_ptr<Process> newProcess = std::make_shared<Process>(nextPID, processName, rolledMem);
@@ -310,8 +309,13 @@ void GlobalScheduler::printConfig() {
 	std::cout << "min-ins: " << minIns << std::endl;
 	std::cout << "max-ins: " << maxIns << std::endl;
 	std::cout << "delay-per-exec: " << delaysPerExec << std::endl;
+	std::cout << "max-overall-mem: " << maxOverallMem << std::endl;
+	std::cout << "mem-per-frame: " << memPerFrame << std::endl;
+	std::cout << "min-mem-per-proc: " << minMemPerProc << std::endl;
+	std::cout << "max-mem-per-proc: " << maxMemPerProc << std::endl;
 	std::cout << "++++++++++++++++++++++++++++++++\n";
 }
+
 void GlobalScheduler::generateReport() 
 {
     std::ofstream outFile("csopesy-log.txt");
@@ -423,27 +427,43 @@ void GlobalScheduler::displayVMStat()
 }
 
 void GlobalScheduler::displayProcessSMI() {
-	std::shared_lock lock(mutex);
+	// --- Step 1: snapshot worker pointers and process lists ---
+	std::vector<std::shared_ptr<CPUWorker>> workersCopy;
+	std::vector<std::shared_ptr<Process>> allProcs;
 
-	int totalCores = static_cast<int>(workers.size());
+	{
+		std::shared_lock lock(mutex);
+		workersCopy = workers;   // copy the shared_ptrs, not the CPUWorker objects themselves
+		allProcs.reserve(runningProcesses.size() + readyQueue.size());
+		for (const auto& p : runningProcesses) allProcs.push_back(p);
+		for (const auto& p : readyQueue) allProcs.push_back(p);
+	} // <-- AScheduler::mutex released here, BEFORE touching any worker
+
+	// --- Step 2: check worker state 
+	int totalCores = static_cast<int>(workersCopy.size());
 	int activeCores = 0;
-	for (const auto& w : workers) {
+	for (const auto& w : workersCopy) {
 		if (!w->isFree()) activeCores++;
 	}
 	int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
 
+	// --- Step 3: resident memory per process ---
 	size_t used = 0;
-	for (const auto& p : runningProcesses) {
+	std::vector<std::pair<std::string, size_t>> procMemUsage;
+	procMemUsage.reserve(allProcs.size());
+
+	for (const auto& p : allProcs) {
 		auto* pt = static_cast<PageTable*>(p->getMemoryAddress());
-		if (pt) used += memoryAllocator->getResidentMemory(pt);
+		if (!pt) continue;
+		size_t resident = memoryAllocator->getResidentMemory(pt);
+		used += resident;
+		procMemUsage.emplace_back(p->getName(), resident);
 	}
-	for (const auto& p : readyQueue) {
-		auto* pt = static_cast<PageTable*>(p->getMemoryAddress());
-		if (pt) used += memoryAllocator->getResidentMemory(pt);
-	}
+
 	size_t total = maxOverallMem;
 	int memUtil = (total > 0) ? static_cast<int>((used * 100) / total) : 0;
 
+	// --- Step 4: print ---
 	std::cout << "\n--------------------------------------------------\n";
 	std::cout << "PROCESS-SMI\n";
 	std::cout << "--------------------------------------------------\n";
@@ -454,21 +474,13 @@ void GlobalScheduler::displayProcessSMI() {
 	std::cout << "Running Processes and Memory Usage\n";
 	std::cout << "--------------------------------------------------\n";
 
-	bool any = false;
-	for (const auto& p : runningProcesses) {
-		auto* pt = static_cast<PageTable*>(p->getMemoryAddress());
-		if (!pt) continue;
-		std::cout << p->getName() << " " << memoryAllocator->getResidentMemory(pt) << "\n";
-		any = true;
-	}
-	for (const auto& p : readyQueue) {
-		auto* pt = static_cast<PageTable*>(p->getMemoryAddress());
-		if (!pt) continue;
-		std::cout << p->getName() << " " << memoryAllocator->getResidentMemory(pt) << "\n";
-		any = true;
-	}
-	if (!any) {
+	if (procMemUsage.empty()) {
 		std::cout << "No running processes\n";
+	}
+	else {
+		for (const auto& [name, resident] : procMemUsage) {
+			std::cout << name << " " << resident << "\n";
+		}
 	}
 
 	std::cout << "--------------------------------------------------\n";
