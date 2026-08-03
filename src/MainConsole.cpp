@@ -165,34 +165,36 @@ void MainConsole::handleCommand(const std::string& input) {
             }
         }
         else if (args[0] == "-r") {
-            if (GlobalScheduler::getInstance() != nullptr) {
-                if (args[1] == "") {
-                    std::cout << "Please enter the process name.\n";
+    if (GlobalScheduler::getInstance() != nullptr) {
+        if (args[1] == "") {
+            std::cout << "Please enter the process name.\n";
+        }
+        else {
+            auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
+            if (process != nullptr) {
+                if (process->hasAccessViolation()) {
+                    std::cout << process->getAccessViolationMessage() << "\n";
+                }
+                else if (process->getState() != ProcessState::FINISHED) {
+                    OSThread::sleep(100);
+                    auto screen = std::make_shared<BaseScreen>(process, args[1]);
+                    ConsoleManager::getInstance()->registerScreen(screen);
+                    ConsoleManager::getInstance()->switchToScreen(screen->getName());
                 }
                 else {
-                    auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
-                    if (process != nullptr) {
-
-                        if (process->hasAccessViolation()) {
-                            std::cout << process->getAccessViolationMessage() << "\n";
-                        }
-                        else {
-                            // Open the screen regardless of finished state, so print output is visible either way
-                            OSThread::sleep(100);
-                            auto screen = std::make_shared<BaseScreen>(process, args[1]);
-                            ConsoleManager::getInstance()->registerScreen(screen);
-                            ConsoleManager::getInstance()->switchToScreen(screen->getName());
-                        }
-                    }
-                    else {
-                        std::cout << "Process " << args[1] << " not found.\n";
-                    }
+                    // If the process name is not found/finished execution
+                    std::cout << "Process " << args[1] << " not found.\n";
                 }
             }
-            else{
-                std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
+            else {
+                std::cout << "Process " << args[1] << " not found.\n";
             }
         }
+    }
+    else {
+        std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
+    }
+}
         else if (args[0] == "-c") {
             size_t firstQuote = input.find('"');
             size_t lastQuote = input.rfind('"');
