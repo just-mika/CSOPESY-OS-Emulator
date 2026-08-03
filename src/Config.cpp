@@ -67,10 +67,9 @@ bool loadConfig(std::string filename, Config& config) {
 
 
 bool isValidMemorySize(unsigned long long size) {
-	/*
 	if (size < MIN_MEM_RANGE || size > MAX_MEM_RANGE) {
 		return false;
-	}*/
+	}
 	// power of two check
 	return (size & (size - 1)) == 0;
 }
