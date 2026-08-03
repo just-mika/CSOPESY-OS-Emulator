@@ -2,39 +2,40 @@
 #include <list>
 #include <unordered_map>
 
+// Keyed by frame index. Not internally synchronized; caller holds the allocator mutex.
 class LRUManager {
 public:
     LRUManager(size_t maxFrames = 0) : maxFrames(maxFrames) {}
 
-    void accessPage(int pageId) {
-        // Remove from its current position if already tracked
-        auto it = pageMap.find(pageId);
-        if (it != pageMap.end()) {
-            lruList.erase(it->second);
-        }
-        // Push to front as MRU
-        lruList.push_front(pageId);
-        pageMap[pageId] = lruList.begin();
+    void touch(size_t frameIndex) {
+        auto it = frameMap.find(frameIndex);
+        if (it != frameMap.end()) order.erase(it->second);
+        order.push_front(frameIndex);
+        frameMap[frameIndex] = order.begin();
     }
 
-    int removeFrame() {
-        if (lruList.empty()) return -1;
-        int lruFrameId = lruList.back();
-        lruList.pop_back();
-        pageMap.erase(lruFrameId);
-        return lruFrameId;
+    long long removeLRU() {
+        if (order.empty()) return -1;
+        size_t lru = order.back();
+        order.pop_back();
+        frameMap.erase(lru);
+        return static_cast<long long>(lru);
     }
 
-    void removePage(int pageId) {
-        auto it = pageMap.find(pageId);
-        if (it != pageMap.end()) {
-            lruList.erase(it->second);
-            pageMap.erase(it);
+    void requeueAsMRU(size_t frameIndex) { touch(frameIndex); }
+
+    void remove(size_t frameIndex) {
+        auto it = frameMap.find(frameIndex);
+        if (it != frameMap.end()) {
+            order.erase(it->second);
+            frameMap.erase(it);
         }
     }
+
+    bool empty() const { return order.empty(); }
 
 private:
     size_t maxFrames;
-    std::list<int> lruList;                                  // access order (front = MRU)
-    std::unordered_map<int, std::list<int>::iterator> pageMap;
+    std::list<size_t> order;
+    std::unordered_map<size_t, std::list<size_t>::iterator> frameMap;
 };

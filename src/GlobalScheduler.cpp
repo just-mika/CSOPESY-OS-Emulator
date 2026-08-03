@@ -30,23 +30,23 @@ void GlobalScheduler::run()
 	{
 		if (generateProcesses) {
 			tick();
+		}
 
-			updateWorkers();
-			updateSleepingProcesses();
-			checkMemoryBlockedQueue();
+		updateWorkers();
+		updateSleepingProcesses();
+		checkMemoryBlockedQueue();
 
-			if (algo == SchedulingAlgorithm::FCFS) {
-				runFCFS();
-			}
-			else if (algo == SchedulingAlgorithm::RR) {
-				runRR();
-			}
+		if (algo == SchedulingAlgorithm::FCFS) {
+			runFCFS();
+		}
+		else if (algo == SchedulingAlgorithm::RR) {
+			runRR();
+		}
 
-			cpuCycles++;
+		cpuCycles++;
 
-			if (cpuCycles > 0 && cpuCycles % quantumCycles == 0) {
-				//generateMemLog(cpuCycles);
-			}
+		if (cpuCycles > 0 && cpuCycles % quantumCycles == 0) {
+			//generateMemLog(cpuCycles);
 		}
 
 		this->sleep(100);
@@ -199,13 +199,12 @@ GlobalScheduler* GlobalScheduler::getInstance()
 }
 
 void GlobalScheduler::init(Config config) {
-	std::string fileName = "csopesy-backing-store.txt";
 	if (!sharedInstance) {
 		sharedInstance = new GlobalScheduler(config);
 	}
 	
 	// Initialize Memory Allocator First
-	PagedMemoryAllocator::init(config.maxOverallMem, config.memPerFrame, fileName);
+	PagedMemoryAllocator::init(config.maxOverallMem, config.memPerFrame, "csopesy-backing-store.txt");
 	sharedInstance->memoryAllocator = std::shared_ptr<PagedMemoryAllocator>(PagedMemoryAllocator::getInstance(), [](IMemoryAllocator*) {});
 
 	// Start the Workers
@@ -407,9 +406,9 @@ void GlobalScheduler::displayVMStat()
 	size_t pagedIn = memoryAllocator->getNumPagedIn();
 	size_t pagedOut = memoryAllocator->getNumPagedOut();
 
-	std::cout << "\n==================================================\n";
-	std::cout << "                 VIRTUAL MEMORY STATS             \n";
-	std::cout << "==================================================\n";
+	std::cout << "\n--------------------------------------------------\n";
+	std::cout << "Virtual Memory Stats\n";
+	std::cout << "--------------------------------------------------\n";
 	std::cout << std::left << std::setw(24) << "Total memory:" << totalMem << " bytes\n";
 	std::cout << std::left << std::setw(24) << "Used memory:" << usedMem << " bytes\n";
 	std::cout << std::left << std::setw(24) << "Free memory:" << freeMem << " bytes\n";
@@ -420,7 +419,7 @@ void GlobalScheduler::displayVMStat()
 	std::cout << "--------------------------------------------------\n";
 	std::cout << std::left << std::setw(24) << "Num paged in:" << pagedIn << "\n";
 	std::cout << std::left << std::setw(24) << "Num paged out:" << pagedOut << "\n";
-	std::cout << "==================================================\n\n";
+	std::cout << "--------------------------------------------------\n";
 }
 
 void GlobalScheduler::displayProcessSMI() {

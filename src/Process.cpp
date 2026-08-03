@@ -28,21 +28,33 @@ Process::Process(int pid, std::string name, size_t memoryRequired)
 }
 
 // Helper function to generate a block of commands for a FOR loop, with depth control to prevent infinite nesting
-static std::vector<std::shared_ptr<ICommand>> generateCommandBlock(int pID, std::string procName, int numCmds, int currentDepth)
+static std::vector<std::shared_ptr<ICommand>> generateCommandBlock(int pID, std::string procName, int numCmds, int currentDepth, size_t memoryRequired)
 {
 	std::vector<std::shared_ptr<ICommand>> block;
 
 	for (int i = 0; i < numCmds; ++i) {
 
-		// If depth is 3 or more, restrict to cases 0-4 (No FOR loops). Otherwise, cases 0-5.
-		int maxCommandType = (currentDepth >= 3) ? 5 : 6;
-		int commandType = rand() % maxCommandType;
+		int commandType;
+		if (currentDepth >= 3) {
+			int pick = rand() % 7;
+			commandType = (pick == 5) ? 6 : pick;
+			if (pick == 6) commandType = 7;
+		}
+		else {
+			commandType = rand() % 8;
+		}
 
 		std::shared_ptr<ICommand> generatedCmd = nullptr;
 
 		std::string randomVar1 = "v" + std::to_string(rand() % 5);
 		std::string randomVar2 = "v" + std::to_string(rand() % 5);
 		uint16_t randomVal = static_cast<uint16_t>(rand() % 65536);
+
+		uint32_t randomAddr = 0;
+		if (memoryRequired >= 2) {
+			uint32_t maxEven = static_cast<uint32_t>((memoryRequired - 2) / 2);
+			randomAddr = static_cast<uint32_t>((rand() % (maxEven + 1)) * 2);
+		}
 
 		switch (commandType) {
 		case 0:
@@ -61,15 +73,18 @@ static std::vector<std::shared_ptr<ICommand>> generateCommandBlock(int pID, std:
 			generatedCmd = std::make_shared<SleepCommand>(pID, static_cast<uint8_t>((rand() % 5) + 1));
 			break;
 		case 5: {
-			// FOR LOOP
 			int innerCmdsAmount = (rand() % 3) + 1;
 			int repeats = (rand() % 4) + 2;
-
-			// Call the helper recursively to generate the inner block of commands, increasing the depth by 1	
-			auto innerBlock = generateCommandBlock(pID, procName, innerCmdsAmount, currentDepth + 1);
+			auto innerBlock = generateCommandBlock(pID, procName, innerCmdsAmount, currentDepth + 1, memoryRequired);
 			generatedCmd = std::make_shared<ForCommand>(pID, innerBlock, repeats);
 			break;
 		}
+		case 6:
+			generatedCmd = std::make_shared<WriteCommand>(pID, randomAddr, randomVal);
+			break;
+		case 7:
+			generatedCmd = std::make_shared<ReadCommand>(pID, randomVar1, randomAddr);
+			break;
 		}
 
 		if (generatedCmd != nullptr) {
@@ -120,7 +135,7 @@ void Process::initializeCommands(int limit)
 	//FileLogger::initializeProcessFile(this->name);
 
 	// Call helper function to create a list of commands
-	std::vector<std::shared_ptr<ICommand>> initialCommands = generateCommandBlock(this->pID, this->name, limit, 1); // Add 1 for command loop depth
+	std::vector<std::shared_ptr<ICommand>> initialCommands = generateCommandBlock(this->pID, this->name, limit, 1, this->memoryRequired); // Add 1 for command loop depth
 		//demoCase(this->pID, this->name, limit, 1);
 		//
 

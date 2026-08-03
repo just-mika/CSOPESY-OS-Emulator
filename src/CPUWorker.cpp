@@ -49,7 +49,7 @@ void CPUWorker::run() {
                 currentProcess->nextInstruction();
             }
             else if (currentProcess != nullptr && currentProcess->isFinished()) {
-                g->checkMemoryBlockedQueue(); // 
+                //g->checkMemoryBlockedQueue(); // 
             }
             lock.unlock();
         }

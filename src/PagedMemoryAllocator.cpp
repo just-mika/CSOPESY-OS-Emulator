@@ -1,7 +1,5 @@
 #include "PagedMemoryAllocator.h"
 #include <iostream>
-#include <list>
-#include <unordered_map>
 #include <algorithm>
 
 PagedMemoryAllocator* PagedMemoryAllocator::sharedInstance = nullptr;
@@ -39,35 +37,18 @@ void* PagedMemoryAllocator::allocate(size_t size, int pid) {
     std::lock_guard<std::mutex> lock(mtx);
     if (size == 0) return nullptr;
 
-    size_t framesNeeded = (size + frameSize - 1) / frameSize;
+    size_t pagesNeeded = (size + frameSize - 1) / frameSize;
 
-    size_t freeFrames = 0;
-    for (bool occupied : frameTable) if (!occupied) freeFrames++;
-    if (freeFrames < framesNeeded) {
-        return nullptr;      
+    bool hasFreeFrame = false;
+    for (bool occupied : frameTable) {
+        if (!occupied) { hasFreeFrame = true; break; }
     }
+    if (!hasFreeFrame) return nullptr;
 
     auto* pageTable = new PageTable();
     pageTable->requestedSize = size;
     pageTable->pid = pid;
-    pageTable->entries.resize(framesNeeded);
-
-    size_t assigned = 0;
-    for (size_t i = 0; i < totalFrames && assigned < framesNeeded; i++) {
-        if (!frameTable[i]) {
-            frameTable[i] = true;
-            PageEntry& e = pageTable->entries[assigned];
-            e.frameNumber = (int)i;
-            e.isValid = true;
-            e.isDirty = false;
-            frameOwner[i] = { pageTable, assigned };
-            int pageId = pid * 1000 + (int)assigned;
-            lruManager.accessPage(pageId);
-            uint8_t* frameStart = &physicalMemory[i * frameSize];
-            backingStore.read_page(pageId, frameStart);
-            assigned++;
-        }
-    }
+    pageTable->entries.resize(pagesNeeded);
 
     currentAllocatedSize += size;
     activeAllocations.push_back(pageTable);
@@ -82,22 +63,18 @@ void PagedMemoryAllocator::deallocate(void* ptr) {
 
     for (size_t i = 0; i < pageTable->entries.size(); i++) {
         PageEntry& entry = pageTable->entries[i];
-        if (entry.isValid) {
-            if (entry.frameNumber >= 0 && entry.frameNumber < (int)totalFrames) {
-                frameTable[entry.frameNumber] = false;
-                frameOwner.erase((size_t)entry.frameNumber);
-            }
-            int pageId = pageTable->pid * 1000 + (int)i;
-            lruManager.removePage(pageId);
+        if (entry.isValid && entry.frameNumber >= 0 && entry.frameNumber < (int)totalFrames) {
+            size_t f = (size_t)entry.frameNumber;
+            frameTable[f] = false;
+            frameOwner.erase(f);
+            lruManager.remove(f);
         }
     }
 
     currentAllocatedSize -= pageTable->requestedSize;
 
     auto it = std::find(activeAllocations.begin(), activeAllocations.end(), pageTable);
-    if (it != activeAllocations.end()) {
-        activeAllocations.erase(it);
-    }
+    if (it != activeAllocations.end()) activeAllocations.erase(it);
     delete pageTable;
 }
 
@@ -107,21 +84,23 @@ uint16_t PagedMemoryAllocator::readWord(PageTable* pt, size_t addr) {
     size_t pageIndex = addr / frameSize;
     size_t offset = addr % frameSize;
 
-    handlePageFault(pt, pageIndex);
-    pt->entries[pageIndex].isPinned = true;   // protect from the second fault's victim search
+    int f = handlePageFault(pt, pageIndex);
+    if (f < 0) return 0;
+    pt->entries[pageIndex].isPinned = true;
 
-    int f = pt->entries[pageIndex].frameNumber;
     uint8_t lo = physicalMemory[(size_t)f * frameSize + offset];
 
-    uint8_t hi;
+    uint8_t hi = 0;
     if (offset + 1 < frameSize) {
         hi = physicalMemory[(size_t)f * frameSize + offset + 1];
     }
     else {
-        // Word straddles a page boundary.
-        handlePageFault(pt, pageIndex + 1);
-        int f2 = pt->entries[pageIndex + 1].frameNumber;
-        hi = physicalMemory[(size_t)f2 * frameSize + 0];
+        int f2 = handlePageFault(pt, pageIndex + 1);
+        if (f2 >= 0) {
+            pt->entries[pageIndex + 1].isPinned = true;
+            hi = physicalMemory[(size_t)f2 * frameSize + 0];
+            pt->entries[pageIndex + 1].isPinned = false;
+        }
     }
 
     pt->entries[pageIndex].isPinned = false;
@@ -134,10 +113,10 @@ void PagedMemoryAllocator::writeWord(PageTable* pt, size_t addr, uint16_t value)
     size_t pageIndex = addr / frameSize;
     size_t offset = addr % frameSize;
 
-    handlePageFault(pt, pageIndex);
+    int f = handlePageFault(pt, pageIndex);
+    if (f < 0) return;
     pt->entries[pageIndex].isPinned = true;
 
-    int f = pt->entries[pageIndex].frameNumber;
     physicalMemory[(size_t)f * frameSize + offset] = static_cast<uint8_t>(value & 0xFF);
     pt->entries[pageIndex].isDirty = true;
 
@@ -145,86 +124,77 @@ void PagedMemoryAllocator::writeWord(PageTable* pt, size_t addr, uint16_t value)
         physicalMemory[(size_t)f * frameSize + offset + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);
     }
     else {
-        handlePageFault(pt, pageIndex + 1);
-        int f2 = pt->entries[pageIndex + 1].frameNumber;
-        physicalMemory[(size_t)f2 * frameSize + 0] = static_cast<uint8_t>((value >> 8) & 0xFF);
-        pt->entries[pageIndex + 1].isDirty = true;
+        int f2 = handlePageFault(pt, pageIndex + 1);
+        if (f2 >= 0) {
+            pt->entries[pageIndex + 1].isPinned = true;
+            physicalMemory[(size_t)f2 * frameSize + 0] = static_cast<uint8_t>((value >> 8) & 0xFF);
+            pt->entries[pageIndex + 1].isDirty = true;
+            pt->entries[pageIndex + 1].isPinned = false;
+        }
     }
 
     pt->entries[pageIndex].isPinned = false;
 }
 
-void PagedMemoryAllocator::handlePageFault(PageTable* pt, size_t pageIndex) {
+int PagedMemoryAllocator::handlePageFault(PageTable* pt, size_t pageIndex) {
     PageEntry& entry = pt->entries[pageIndex];
+
     if (entry.isValid) {
-        // Already resident: just mark it most-recently-used.
-        int pageId = pt->pid * 1000 + (int)pageIndex;
-        lruManager.accessPage(pageId);
-        return;
+        lruManager.touch((size_t)entry.frameNumber);
+        return entry.frameNumber;
     }
 
-    int freeFrame = -1;
+    long long frame = -1;
     for (size_t i = 0; i < totalFrames; i++) {
-        if (!frameTable[i]) { freeFrame = (int)i; break; }
+        if (!frameTable[i]) { frame = (long long)i; break; }
     }
 
-    if (freeFrame == -1) {
-        freeFrame = (int)selectVictim();
-        evictPage((size_t)freeFrame);
+    if (frame == -1) {
+        long long victim = selectVictim();
+        if (victim < 0) return -1;   // all frames pinned
+        evictPage((size_t)victim);
+        frame = victim;
     }
 
-    frameTable[freeFrame] = true;
-    entry.frameNumber = freeFrame;
+    frameTable[(size_t)frame] = true;
+    entry.frameNumber = (int)frame;
     entry.isValid = true;
     entry.isDirty = false;
 
-    int pageId = pt->pid * 1000 + (int)pageIndex;
-    frameOwner[(size_t)freeFrame] = { pt, pageIndex };
-    lruManager.accessPage(pageId);
+    if (entry.backingSlot < 0) entry.backingSlot = nextBackingSlot++;
 
-    uint8_t* frameStart = &physicalMemory[(size_t)freeFrame * frameSize];
-    backingStore.read_page(pageId, frameStart);
+    frameOwner[(size_t)frame] = { pt, pageIndex };
+    lruManager.touch((size_t)frame);
+
+    uint8_t* frameStart = &physicalMemory[(size_t)frame * frameSize];
+    backingStore.read_page((int)entry.backingSlot, frameStart);
     numPagedIn++;
+
+    return (int)frame;
 }
 
-size_t PagedMemoryAllocator::selectVictim() {
-    size_t attempts = 0;
-    size_t maxAttempts = totalFrames > 0 ? totalFrames * 2 : 100;
-    std::vector<int> requeue;
-    while (attempts < maxAttempts) {
-        int pageId = lruManager.removeFrame();
-        if (pageId == -1) break;
+long long PagedMemoryAllocator::selectVictim() {
+    std::vector<size_t> skipped;
+    long long chosen = -1;
 
-        bool matched = false;
-        for (auto& [frameIdx, owner] : frameOwner) {
-            if (owner.first == nullptr) continue;
+    while (true) {
+        long long lru = lruManager.removeLRU();
+        if (lru < 0) break;
 
-            int ownerPageId = owner.first->pid * 1000 + (int)owner.second;
-            if (ownerPageId == pageId) {
-                matched = true;
-                bool pinned = owner.first->entries[owner.second].isPinned;
-                if (!pinned) {
-                    for (int rid : requeue) lruManager.accessPage(rid);
-                    return frameIdx;
-                }
-                break;
-            }
+        auto it = frameOwner.find((size_t)lru);
+        if (it == frameOwner.end() || it->second.first == nullptr) continue;
+
+        PageTable* pt = it->second.first;
+        size_t pageIdx = it->second.second;
+        if (!pt->entries[pageIdx].isPinned) {
+            chosen = lru;
+            break;
         }
-        if (matched) requeue.push_back(pageId);
-        attempts++;
+        skipped.push_back((size_t)lru);
     }
 
-    for (int rid : requeue) lruManager.accessPage(rid);
-
-    for (auto& [frameIdx, owner] : frameOwner) {
-        if (owner.first != nullptr && !owner.first->entries[owner.second].isPinned) {
-            return frameIdx;
-        }
-    }
-    for (auto& [frameIdx, owner] : frameOwner) {
-        if (owner.first != nullptr) return frameIdx;
-    }
-    return 0;
+    for (size_t f : skipped) lruManager.requeueAsMRU(f);
+    return chosen;
 }
 
 void PagedMemoryAllocator::evictPage(size_t frameIndex) {
@@ -236,14 +206,13 @@ void PagedMemoryAllocator::evictPage(size_t frameIndex) {
     PageEntry& entry = pt->entries[pageIndex];
 
     if (entry.isDirty) {
-        int pageId = pt->pid * 1000 + (int)pageIndex;
+        if (entry.backingSlot < 0) entry.backingSlot = nextBackingSlot++;
         uint8_t* frameStart = &physicalMemory[frameIndex * frameSize];
-        backingStore.write_page(pageId, frameStart);
+        backingStore.write_page((int)entry.backingSlot, frameStart);
         numPagedOut++;
     }
 
-    int pageId = pt->pid * 1000 + (int)pageIndex;
-    lruManager.removePage(pageId);
+    lruManager.remove(frameIndex);
 
     entry.isValid = false;
     entry.frameNumber = -1;
@@ -255,8 +224,6 @@ size_t PagedMemoryAllocator::getResidentMemory(PageTable* pt) const {
     std::lock_guard<std::mutex> lock(mtx);
     if (!pt) return 0;
     size_t resident = 0;
-    for (const auto& e : pt->entries) {
-        if (e.isValid) resident++;
-    }
+    for (const auto& e : pt->entries) if (e.isValid) resident++;
     return resident * frameSize;
 }

@@ -29,7 +29,6 @@ void AScheduler::checkMemoryBlockedQueue() {
             process->setMemoryAddress(ptr);
             process->setState(ProcessState::READY);
             readyQueue.push_back(process);
-            processTable[process->getPID()] = process;
             it = memoryQueue.erase(it);
         }
         else {
@@ -44,6 +43,7 @@ void AScheduler::addProcess(std::shared_ptr<Process> process) {
     std::unique_lock lock(mutex);
     process->setState(ProcessState::WAITING);
     memoryQueue.push_back(process);
+    processTable[process->getPID()] = process;
     lock.unlock();
     checkMemoryBlockedQueue();
 }

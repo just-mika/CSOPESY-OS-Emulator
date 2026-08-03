@@ -17,7 +17,8 @@ struct PageEntry {
     int frameNumber = -1;
     bool isValid = false;
     bool isDirty = false;
-    bool isPinned = false;   // set while a read/write is in flight so selectVictim skips it
+    bool isPinned = false;
+    long long backingSlot = -1;
 };
 
 struct PageTable {
@@ -46,12 +47,8 @@ public:
         for (bool occupied : frameTable) if (occupied) allocatedFrames++;
         return allocatedFrames * frameSize;
     }
-    size_t getTotalMemory() const {
-        return maximumSize;
-    }
-    size_t getFreeMemory() const {
-        return maximumSize - getUsedMemory();
-    }
+    size_t getTotalMemory() const { return maximumSize; }
+    size_t getFreeMemory() const { return maximumSize - getUsedMemory(); }
 
     std::string visualizeMemory() override {
         std::lock_guard<std::mutex> lock(mtx);
@@ -94,15 +91,17 @@ private:
     std::vector<bool> frameTable;
     std::vector<PageTable*> activeAllocations;
 
-    // for demand paging
     std::vector<uint8_t> physicalMemory;
     LRUManager lruManager;
     size_t numPagedIn = 0;
     size_t numPagedOut = 0;
     std::unordered_map<size_t, FrameOwner> frameOwner;
     BackingStore backingStore;
+    long long nextBackingSlot = 0;
 
-    void handlePageFault(PageTable* pt, size_t pageIndex);
-    size_t selectVictim();
+    // All assume mtx is held. handlePageFault returns the resident frame, or -1
+    // if none could be freed. selectVictim returns an evictable frame, or -1.
+    int handlePageFault(PageTable* pt, size_t pageIndex);
+    long long selectVictim();
     void evictPage(size_t frameIndex);
 };
