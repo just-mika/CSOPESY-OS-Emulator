@@ -175,14 +175,7 @@ void MainConsole::handleCommand(const std::string& input) {
                 else {
                     auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
                     if (process != nullptr) {
-                        // NOTE for Member 2: once Process tracks a memory-
-                        // access-violation shutdown (bool + timestamp +
-                        // faulting address), branch here instead and print:
-                        // "Process <name> shut down due to memory access
-                        //  violation error that occurred at <HH:MM:SS>.
-                        //  <Hex memory address> invalid."
-
-                        // Check for access violation first (even if process state is FINISHED)
+                        
                         if (process->hasAccessViolation()) {
                             std::cout << process->getAccessViolationMessage() << "\n";
                         }
@@ -274,23 +267,6 @@ void MainConsole::handleCommand(const std::string& input) {
                             return;
                         }
                         else {
-                            // NOTE for Member 3: same memory-size-aware creation entry point as "screen -s" above
-                            //process = GlobalScheduler::getInstance()->createUniqueProcess(args[1], memSize);
-
-                            // NOTE for Member 2: Process needs a method (e.g.
-                            // loadUserDefinedInstructions(const std::vector<std::string>&))
-                            // that turns each validated instruction string
-                            // here into the matching ICommand
-                            // (PrintCommand/DeclareCommand/MathCommand/
-                            // SleepCommand/ForCommand/ReadCommand/
-                            // WriteCommand) and appends it via addCommand(),
-                            // instead of the random generateCommandBlock()
-                            // path used by Process::initializeCommands().
-                            // `instructions` already holds the validated,
-                            // semicolon-split, trimmed instruction list.
-                            // process->loadUserDefinedInstructions(instructions);
-
-                            // Create process with user-defined memory size
                             process = GlobalScheduler::getInstance()->createUniqueProcess(args[1], memSize, false);
 
                             // Load user instructions into process
