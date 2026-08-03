@@ -25,6 +25,9 @@ void AScheduler::checkMemoryBlockedQueue() {
         auto process = *it;
         size_t sizeR = process->getMemoryRequired();
         void* ptr = memoryAllocator->allocate(sizeR, process->getPID());
+        std::cout << ptr;
+        std::cout << "location: " + process->getName();
+        OSThread::sleep(1000);
         if (ptr != nullptr) {
             process->setMemoryAddress(ptr);
             process->setState(ProcessState::READY);

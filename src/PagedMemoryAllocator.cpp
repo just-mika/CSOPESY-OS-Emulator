@@ -39,11 +39,9 @@ void* PagedMemoryAllocator::allocate(size_t size, int pid) {
 
     size_t pagesNeeded = (size + frameSize - 1) / frameSize;
 
-    bool hasFreeFrame = false;
-    for (bool occupied : frameTable) {
-        if (!occupied) { hasFreeFrame = true; break; }
-    }
-    if (!hasFreeFrame) return nullptr;
+    size_t freeFrames = 0;
+    for (bool occupied : frameTable) if (!occupied) freeFrames++;
+    if (freeFrames == 0) return nullptr;
 
     auto* pageTable = new PageTable();
     pageTable->requestedSize = size;
@@ -52,6 +50,9 @@ void* PagedMemoryAllocator::allocate(size_t size, int pid) {
 
     currentAllocatedSize += size;
     activeAllocations.push_back(pageTable);
+
+    handlePageFault(pageTable, 0);
+
     return static_cast<void*>(pageTable);
 }
 
