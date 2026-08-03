@@ -196,51 +196,65 @@ void MainConsole::handleCommand(const std::string& input) {
     }
 }
         else if (args[0] == "-c") {
-            size_t firstQuote = input.find('"');
-            size_t lastQuote = input.rfind('"');
+    size_t firstQuote = input.find('"');
+    size_t lastQuote = input.rfind('"');
 
-            if (args[1] == "") {
-                std::cout << "Please enter the process name.\n";
-                return;
-            }
+    if (args[1] == "") {
+        std::cout << "Please enter the process name.\n";
+        return;
+    }
 
-            if (firstQuote == std::string::npos || lastQuote == std::string::npos || lastQuote <= firstQuote) {
-                std::cout << "invalid command\n";
-                return;
-            }
+    if (args[2] == "" || !isNumericString(args[2])) {
+        std::cout << "invalid memory allocation\n";
+        return;
+    }
 
-            std::string instructionBlob = input.substr(firstQuote + 1, lastQuote - firstQuote - 1);
-            std::vector<std::string> instructions = splitInstructions(instructionBlob);
+    unsigned long long memSize;
+    try {
+        memSize = std::stoull(args[2]);
+    } catch (...) {
+        std::cout << "invalid memory allocation\n";
+        return;
+    }
 
-            if (instructions.empty() || instructions.size() > 50) {
-                std::cout << "invalid command\n";
-                return;
-            }
-            else if (GlobalScheduler::getInstance() == nullptr) {
-                std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
-                return;
-            }
-            else {
-                auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
-                if (process != nullptr) {
-                    std::cout << "Process " << args[1] << " already exists.\n";
-                    return;
-                }
-                else {
-                    auto* g = GlobalScheduler::getInstance();
-                    process = g->createUniqueProcess(args[1], g->getMinMemPerProc(), false);
-                    process->loadUserDefinedInstructions(instructions);
+    if (!isValidMemorySize(memSize)) {
+        std::cout << "invalid memory allocation\n";
+        return;
+    }
 
-                    auto screen = std::make_shared<BaseScreen>(process, args[1]);
-                    ConsoleManager::getInstance()->registerScreen(screen);
-                    ConsoleManager::getInstance()->switchToScreen(screen->getName());
-                }
-            }
+    if (firstQuote == std::string::npos || lastQuote == std::string::npos || lastQuote <= firstQuote) {
+        std::cout << "invalid command\n";
+        return;
+    }
+
+    std::string instructionBlob = input.substr(firstQuote + 1, lastQuote - firstQuote - 1);
+    std::vector<std::string> instructions = splitInstructions(instructionBlob);
+
+    if (instructions.empty() || instructions.size() > 50) {
+        std::cout << "invalid command\n";
+        return;
+    }
+    else if (GlobalScheduler::getInstance() == nullptr) {
+        std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
+        return;
+    }
+    else {
+        auto* g = GlobalScheduler::getInstance();
+        auto process = g->findProcess(args[1]);
+        if (process != nullptr) {
+            std::cout << "Process " << args[1] << " already exists.\n";
+            return;
         }
         else {
-            std::cout << "Invalid arguments for " << command << " command.\n";
+            process = g->createUniqueProcess(args[1], memSize, false);
+            process->loadUserDefinedInstructions(instructions);
+
+            auto screen = std::make_shared<BaseScreen>(process, args[1]);
+            ConsoleManager::getInstance()->registerScreen(screen);
+            ConsoleManager::getInstance()->switchToScreen(screen->getName());
         }
     }
+}
     else if (command == "scheduler-start") {
         if (GlobalScheduler::getInstance() == nullptr) {
             std::cout << "Config not initialized yet.\n";
