@@ -18,16 +18,14 @@ AScheduler::AScheduler(Config config)
     minMemPerProc(config.minMemPerProc),
     maxMemPerProc(config.maxMemPerProc)
 { }
-void AScheduler::checkMemoryBlockedQueue() {
+void AScheduler::admitFromMemoryQueue() {
     std::unique_lock lock(mutex);
     auto it = memoryQueue.begin();
     while (it != memoryQueue.end()) {
         auto process = *it;
         size_t sizeR = process->getMemoryRequired();
         void* ptr = memoryAllocator->allocate(sizeR, process->getPID());
-        //std::cout << ptr;
-        //std::cout << "location: " + process->getName();
-        OSThread::sleep(1000);
+
         if (ptr != nullptr) {
             process->setMemoryAddress(ptr);
             process->setState(ProcessState::READY);
@@ -35,7 +33,7 @@ void AScheduler::checkMemoryBlockedQueue() {
             it = memoryQueue.erase(it);
         }
         else {
-            break;
+            ++it;
         }
     }
 }
@@ -48,7 +46,7 @@ void AScheduler::addProcess(std::shared_ptr<Process> process) {
     memoryQueue.push_back(process);
     processTable[process->getPID()] = process;
     lock.unlock();
-    checkMemoryBlockedQueue();
+    admitFromMemoryQueue();
 }
 
 std::shared_ptr<Process> AScheduler::findProcess(const std::string& processName) {
@@ -109,4 +107,17 @@ std::deque<std::shared_ptr<Process>> AScheduler::getRunningProcesses()
 {
     std::shared_lock lock(mutex);
     return runningProcesses;
+}
+
+unsigned long long AScheduler::getMinMemPerProc()
+{
+    return this->minMemPerProc;
+}
+
+size_t AScheduler::rollMemSize() {
+    size_t rolledMem = minMemPerProc;
+    if (maxMemPerProc > minMemPerProc) {
+        rolledMem = minMemPerProc + (rand() % (maxMemPerProc - minMemPerProc + 1));
+    }
+    return rolledMem;
 }

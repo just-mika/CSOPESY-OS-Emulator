@@ -172,19 +172,16 @@ void MainConsole::handleCommand(const std::string& input) {
                 else {
                     auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
                     if (process != nullptr) {
-                        
+
                         if (process->hasAccessViolation()) {
                             std::cout << process->getAccessViolationMessage() << "\n";
                         }
-                        // Otherwise open screen if still active
-                        else if (process->getState() != ProcessState::FINISHED) {
+                        else {
+                            // Open the screen regardless of finished state, so print output is visible either way
                             OSThread::sleep(100);
                             auto screen = std::make_shared<BaseScreen>(process, args[1]);
                             ConsoleManager::getInstance()->registerScreen(screen);
                             ConsoleManager::getInstance()->switchToScreen(screen->getName());
-                        }
-                        else {
-                            std::cout << "Process " << args[1] << " has finished execution.\n";
                         }
                     }
                     else {
@@ -197,7 +194,6 @@ void MainConsole::handleCommand(const std::string& input) {
             }
         }
         else if (args[0] == "-c") {
-            // since instructions are quoted and semicolon-separated 
             size_t firstQuote = input.find('"');
             size_t lastQuote = input.rfind('"');
 
@@ -205,75 +201,37 @@ void MainConsole::handleCommand(const std::string& input) {
                 std::cout << "Please enter the process name.\n";
                 return;
             }
-            
-            // Missing or malformed memory size
-            if (args[2] == "" || !isNumericString(args[2])) {
-                std::cout << "invalid memory allocation\n";
-                return;
-            }
-            
-            // Missing quotes / malformed instruction string
-            if (firstQuote == std::string::npos || lastQuote == std::string::npos || lastQuote <= firstQuote)
-            {
+
+            if (firstQuote == std::string::npos || lastQuote == std::string::npos || lastQuote <= firstQuote) {
                 std::cout << "invalid command\n";
                 return;
             }
 
-            if (args[1] == "" || args[2] == "" ||
-                firstQuote == std::string::npos || lastQuote == std::string::npos ||
-                lastQuote <= firstQuote) {
+            std::string instructionBlob = input.substr(firstQuote + 1, lastQuote - firstQuote - 1);
+            std::vector<std::string> instructions = splitInstructions(instructionBlob);
+
+            if (instructions.empty() || instructions.size() > 50) {
                 std::cout << "invalid command\n";
                 return;
             }
-            else if (!isNumericString(args[2])) {
-                std::cout << "invalid memory allocation\n";
+            else if (GlobalScheduler::getInstance() == nullptr) {
+                std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
                 return;
             }
             else {
-                unsigned long long memSize;
-                try {
-                    memSize = std::stoull(args[2]); 
-                } catch (...) {
-                    std::cout << "invalid memory allocation\n";
-                    return;
-                }
-                if (!isValidMemorySize(memSize)) {
-                    std::cout << "invalid memory allocation\n";
+                auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
+                if (process != nullptr) {
+                    std::cout << "Process " << args[1] << " already exists.\n";
                     return;
                 }
                 else {
-                    std::string instructionBlob = input.substr(firstQuote + 1, lastQuote - firstQuote - 1);
-                    std::vector<std::string> instructions = splitInstructions(instructionBlob);
+                    auto* g = GlobalScheduler::getInstance();
+                    process = g->createUniqueProcess(args[1], g->getMinMemPerProc(), false);
+                    process->loadUserDefinedInstructions(instructions);
 
-                    // sends a string of 1 – 50 instructions to be executed by the specified process. 
-                    // Throws “invalid command” if the instruction size is not met.
-                   if (instructions.empty() || instructions.size() > 50)
-                   {
-                    std::cout << "invalid command\n";
-                    return;
-                }
-
-                    else if (GlobalScheduler::getInstance() == nullptr) {
-                        std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
-                        return;
-                    }
-                    else {
-                        auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
-                        if (process != nullptr) {
-                            std::cout << "Process " << args[1] << " already exists.\n";
-                            return;
-                        }
-                        else {
-                            process = GlobalScheduler::getInstance()->createUniqueProcess(args[1], memSize, false);
-
-                            // Load user instructions into process
-                            process->loadUserDefinedInstructions(instructions);
-
-                            auto screen = std::make_shared<BaseScreen>(process, args[1]);
-                            ConsoleManager::getInstance()->registerScreen(screen);
-                            ConsoleManager::getInstance()->switchToScreen(screen->getName());
-                        }
-                    }
+                    auto screen = std::make_shared<BaseScreen>(process, args[1]);
+                    ConsoleManager::getInstance()->registerScreen(screen);
+                    ConsoleManager::getInstance()->switchToScreen(screen->getName());
                 }
             }
         }
@@ -380,25 +338,28 @@ void printHeader()
     std::cout << "*==================================================*";
 }
 std::pair<int, int> getActiveAndTotalCores() {
-    std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
-    auto workers = GlobalScheduler::getInstance()->getWorkers();
-    int activeCores = 0;
-    int totalCores = workers.size();
+    std::vector<std::shared_ptr<CPUWorker>> workersCopy;
 
-    for (const auto& worker : workers)
     {
-        if (!worker->isFree())
-        {
+        std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
+        workersCopy = GlobalScheduler::getInstance()->getWorkers();
+    } 
+
+    int totalCores = static_cast<int>(workersCopy.size());
+    int activeCores = 0;
+    for (const auto& worker : workersCopy) {
+        if (!worker->isFree()) { 
             activeCores++;
         }
     }
-    lock.unlock();
+
     return { activeCores, totalCores };
 }
+
 void MainConsole::displayScreenLS() const
 {
     auto [activeCores, totalCores] = getActiveAndTotalCores();
-    std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
+    //::shared_lock lock(GlobalScheduler::getInstance()->mutex);
     int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
 
     std::cout << "CPU Utilization: " << cpuUtil << "%\n";
@@ -436,7 +397,7 @@ void MainConsole::displayScreenLS() const
         }
     }
     else std::cout << "No finished processes\n";
-    lock.unlock();
+    //lock.unlock();
     std::cout << "--------------------------------------------------\n";
 }
 

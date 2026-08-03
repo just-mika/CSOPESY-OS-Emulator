@@ -19,7 +19,7 @@ void BaseScreen::process(){
 	std::getline(std::cin, command);
 
 	if (command == "process-smi")
-		this->printProcessInfo();
+		this->printProcessInfo(true);
 	else if (command == "exit")
 	{
 		ConsoleManager::getInstance()->returnToPreviousConsole();
@@ -32,15 +32,20 @@ void BaseScreen::display(){
 	std::cout << "ID: " << attachedProcess->getPID() << "\n\n";
 	std::cout << "Current instruction line: " << attachedProcess->getCommandCounter() << "\n";
 	std::cout << "Lines of code: " << attachedProcess->getLinesOfCode() << "\n\n";
+
+	if (attachedProcess->getState() == ProcessState::FINISHED)
+		this->printProcessInfo(false);
 }
 
 //Prints info about the process
 // Attributes needed: processName, execDT, core 
 // just format and print the info as is
-void BaseScreen::printProcessInfo() const{
-	std::cout << "Process name: " << attachedProcess->getName() << "\n";
-	std::cout << "ID: " << attachedProcess->getPID() << "\n\n";
-	std::cout << "Logs:\n";
+void BaseScreen::printProcessInfo(bool displayHeader) const{
+	if (displayHeader) {
+		std::cout << "Process name: " << attachedProcess->getName() << "\n";
+		std::cout << "ID: " << attachedProcess->getPID() << "\n\n";
+		std::cout << "Logs:\n";
+	}
 
 	auto logs = attachedProcess->getPrintLogs();
 	if (logs) {

@@ -16,7 +16,10 @@ void DeclareCommand::execute()
     if (!process) return;
 
     auto* pageTable = static_cast<PageTable*>(process->getMemoryAddress());
-    PagedMemoryAllocator::getInstance()->ensurePageResident(pageTable, 0);
+    int frame = PagedMemoryAllocator::getInstance()->ensurePageResident(pageTable, 0);
+    if (frame < 0) {
+        return;   // don't touch the symbol table yet — page isn't resident
+    }
 
     // Grab the process's specific symbol table and declare the variable
     process->getSymbolTable().setVariable(this->varName, PrimitiveType::UINT16, this->defaultValue);

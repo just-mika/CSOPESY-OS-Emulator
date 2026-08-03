@@ -15,6 +15,8 @@
 
 #include "PagedMemoryAllocator.h"
 
+static std::pair<std::string, std::string> parsePrintArgs(const std::string& line);
+
 Process::Process(int pid, std::string name, size_t memoryRequired)
 {
 	this->pID = pid;
@@ -203,10 +205,64 @@ void Process::loadUserDefinedInstructions(const std::vector<std::string>& instru
 		}
 		else if (op.rfind("PRINT", 0) == 0)
 		{
-			// Simple or formatted PRINT instruction
-			addCommand(std::make_shared<PrintCommand>(pID));
+			auto [toPrint, varName] = parsePrintArgs(line);
+			addCommand(std::make_shared<PrintCommand>(pID, toPrint, varName));
 		}
 	}
+}
+
+// Parses PRINT("literal" + varName) or PRINT("literal") or PRINT(varName)
+// Returns {toPrint, varName} — either may be empty depending on what's present.
+static std::pair<std::string, std::string> parsePrintArgs(const std::string& line)
+{
+	std::string toPrint;
+	std::string varName;
+
+	size_t printPos = line.find("PRINT");
+	if (printPos == std::string::npos) return { toPrint, varName };
+
+	std::string rest = line.substr(printPos + 5);
+
+	size_t openParen = rest.find('(');
+	size_t closeParen = rest.rfind(')');
+	if (openParen == std::string::npos || closeParen == std::string::npos || closeParen <= openParen) {
+		return { toPrint, varName };
+	}
+
+	std::string inner = rest.substr(openParen + 1, closeParen - openParen - 1);
+
+	// Strip literal backslashes (from escaped quotes like \") before searching
+	std::string cleaned;
+	for (char c : inner) {
+		if (c != '\\') cleaned += c;
+	}
+	inner = cleaned;
+
+	size_t firstQuote = inner.find('"');
+	size_t secondQuote = inner.find('"', firstQuote + 1);
+
+	if (firstQuote != std::string::npos && secondQuote != std::string::npos) {
+		toPrint = inner.substr(firstQuote + 1, secondQuote - firstQuote - 1);
+
+		size_t plusPos = inner.find('+', secondQuote);
+		if (plusPos != std::string::npos) {
+			std::string varPart = inner.substr(plusPos + 1);
+			size_t start = varPart.find_first_not_of(" \t");
+			size_t end = varPart.find_last_not_of(" \t");
+			if (start != std::string::npos) {
+				varName = varPart.substr(start, end - start + 1);
+			}
+		}
+	}
+	else {
+		size_t start = inner.find_first_not_of(" \t");
+		size_t end = inner.find_last_not_of(" \t");
+		if (start != std::string::npos) {
+			varName = inner.substr(start, end - start + 1);
+		}
+	}
+
+	return { toPrint, varName };
 }
 
 std::string static formatTime(time_t timeToFormat) {
@@ -362,6 +418,11 @@ bool Process::isValidAddress(uint32_t addr) const {
 	return (addr < memoryRequired) && (memoryRequired - addr >= 2);
 }
 
+uint32_t Process::mapAddress(uint32_t addr) const {
+	if (memoryRequired == 0) return 0;
+	return addr % static_cast<uint32_t>(memoryRequired);
+}
+
 void Process::triggerAccessViolation(uint32_t addr) {
 	this->accessViolation = true;
 	this->invalidAddress = addr;
@@ -391,25 +452,25 @@ std::string Process::getAccessViolationMessage() const {
 }
 
 uint16_t Process::readMemory(uint32_t addr) {
-	if (!isValidAddress(addr)) {
-		triggerAccessViolation(addr);
+	uint32_t mapped = mapAddress(addr);
+	if (!isValidAddress(mapped)) {
+		triggerAccessViolation(addr);   // report the original address in the violation, not the mapped one
 		return 0;
 	}
-
 	auto* allocator = PagedMemoryAllocator::getInstance();
 	auto* pageTable = static_cast<PageTable*>(memoryAddress);
-	return allocator->readWord(pageTable, addr);
+	return allocator->readWord(pageTable, mapped);
 }
 
 void Process::writeMemory(uint32_t addr, uint16_t value) {
-	if (!isValidAddress(addr)) {
+	uint32_t mapped = mapAddress(addr);
+	if (!isValidAddress(mapped)) {
 		triggerAccessViolation(addr);
 		return;
 	}
-
 	auto* allocator = PagedMemoryAllocator::getInstance();
 	auto* pageTable = static_cast<PageTable*>(memoryAddress);
-	allocator->writeWord(pageTable, addr, value);
+	allocator->writeWord(pageTable, mapped, value);
 }
 
 size_t Process::getMemoryRequired() const {
