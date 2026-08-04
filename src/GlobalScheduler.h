@@ -13,6 +13,7 @@ public:
     static void init(Config config);
     std::shared_ptr<Process> createUniqueProcess(std::string name, size_t memoryRequired, bool generateRandomCommands = true);
     std::shared_ptr<Process> createUniqueProcess(std::string name);
+    std::shared_ptr<Process> createUniqueProcess(std::string name, bool generateRandomCommands = true);
     std::vector<std::shared_ptr<CPUWorker>> getWorkers();
     void generateReport();
     void setGenerating(bool generating);
@@ -20,6 +21,8 @@ public:
 
     bool isInitialized();
     bool hasStarted();
+    void displayVMStat();
+    void displayProcessSMI();
     friend class CPUWorker;
 
 private:
@@ -29,6 +32,8 @@ private:
     void tick();
     void startWorkers();
     void run() override;
+    uint64_t activeCpuTicks = 0;
+    uint64_t idleCpuTicks = 0;
     static GlobalScheduler* sharedInstance;
     std::vector<std::shared_ptr<CPUWorker>> workers;
     std::shared_ptr<AScheduler> scheduler;

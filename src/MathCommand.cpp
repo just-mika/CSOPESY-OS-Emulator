@@ -1,6 +1,7 @@
 #include "MathCommand.h"
 #include "GlobalScheduler.h"
 #include "Process.h"
+#include "PagedMemoryAllocator.h"  
 #include <algorithm>
 
 #include "FileLogger.h"
@@ -33,6 +34,12 @@ void MathCommand::execute()
     std::shared_ptr<Process> process = GlobalScheduler::getInstance()->findProcess(pid);
 
     if (process) {
+        auto* pageTable = static_cast<PageTable*>(process->getMemoryAddress());
+        int frame = PagedMemoryAllocator::getInstance()->ensurePageResident(pageTable, 0);
+        if (frame < 0) {
+            return;   // don't touch the symbol table yet — page isn't resident
+        }
+
         uint16_t val1 = evaluateOperand(this->op1, process);
         uint16_t val2 = evaluateOperand(this->op2, process);
 

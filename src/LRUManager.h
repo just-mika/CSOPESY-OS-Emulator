@@ -1,39 +1,48 @@
-
+#pragma once
 #include <list>
 #include <unordered_map>
 
+// Keyed by frame index. Not internally synchronized; caller holds the allocator mutex.
 class LRUManager {
 public:
     LRUManager(size_t maxFrames = 0) : maxFrames(maxFrames) {}
-    void accessPage(int pageId) {
-        // Remove frame from its current position if it's already in pageMap
-        if (pageMap.find(pageId) != pageMap.end()) {
-            lruList.erase(pageMap[pageId]);
+
+	// Mark a frame as recently used (most-recently-used)
+    void touch(size_t frameIndex) {
+        auto it = frameMap.find(frameIndex);
+        if (it != frameMap.end()) order.erase(it->second);
+        order.push_front(frameIndex);
+        frameMap[frameIndex] = order.begin();
+    }
+
+	// Remove the least-recently-used frame
+	// return its index, or -1 if empty
+    long long removeLRU() {
+        if (order.empty()) return -1;
+        size_t lru = order.back();
+        order.pop_back();
+        frameMap.erase(lru);
+        return static_cast<long long>(lru);
+    }
+
+	// Remove a specific frame from the LRU tracking
+    void remove(size_t frameIndex) {
+        auto it = frameMap.find(frameIndex);
+        if (it != frameMap.end()) {
+            order.erase(it->second);
+            frameMap.erase(it);
         }
-
-        // Push frame to front as MRU
-        lruList.push_front(pageId);
-        pageMap[pageId] = lruList.begin();
-    }
-    int removeFrame() {
-        if (lruList.empty()) return -1; // Always guaranteed to return something, but just in case : <>
-
-        int lruFrameId = lruList.back();
-        lruList.pop_back();
-        pageMap.erase(lruFrameId);
-
-        return lruFrameId;
     }
 
-    void removePage(int pageId) {
-        auto it = pageMap.find(pageId);
-        if (it != pageMap.end()) {
-            lruList.erase(it->second);
-            pageMap.erase(it);
-        }
-    }
+
+    // Requeue a frame as most-recently-used
+    void requeueAsMRU(size_t frameIndex) { touch(frameIndex); }
+
+	// Check if the LRU list is empty
+    bool empty() const { return order.empty(); }
+
 private:
     size_t maxFrames;
-    std::list<int> lruList; // Tracks the order of access
-    std::unordered_map<int, std::list<int>::iterator> pageMap; // Keeps all pages in RAM
+    std::list<size_t> order;
+    std::unordered_map<size_t, std::list<size_t>::iterator> frameMap;
 };

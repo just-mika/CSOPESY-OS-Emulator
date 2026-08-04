@@ -120,13 +120,13 @@ void MainConsole::handleCommand(const std::string& input) {
         display();
     }
     else if (command == "screen") {
-        if (args[0] == "-ls") 
+        if (args[0] == "-ls")
         {
-            if (GlobalScheduler::getInstance() != nullptr) 
+            if (GlobalScheduler::getInstance() != nullptr)
             {
                 displayScreenLS();
-            } 
-            else 
+            }
+            else
             {
                 std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
             }
@@ -143,7 +143,8 @@ void MainConsole::handleCommand(const std::string& input) {
                 unsigned long long memSize;
                 try {
                     memSize = std::stoull(args[2]);
-                } catch (...) {
+                }
+                catch (...) {
                     std::cout << "invalid memory allocation\n";
                     return;
                 }
@@ -153,9 +154,6 @@ void MainConsole::handleCommand(const std::string& input) {
                 else if (GlobalScheduler::getInstance() != nullptr) {
                     auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
                     if (process == nullptr) {
-                        // NOTE for Member 3: for createUniqueProcess 
-                        // Process(pid, name, memoryRequired) is constructed with memSize
-                        // already validated against [2^6, 2^16] above
                         process = GlobalScheduler::getInstance()->createUniqueProcess(args[1], memSize, true);
                     }
                     auto screen = std::make_shared<BaseScreen>(process, args[1]);
@@ -175,39 +173,25 @@ void MainConsole::handleCommand(const std::string& input) {
                 else {
                     auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
                     if (process != nullptr) {
-                        // NOTE for Member 2: once Process tracks a memory-
-                        // access-violation shutdown (bool + timestamp +
-                        // faulting address), branch here instead and print:
-                        // "Process <name> shut down due to memory access
-                        //  violation error that occurred at <HH:MM:SS>.
-                        //  <Hex memory address> invalid."
-
-                        // Check for access violation first (even if process state is FINISHED)
                         if (process->hasAccessViolation()) {
                             std::cout << process->getAccessViolationMessage() << "\n";
+							return;
                         }
-                        // Otherwise open screen if still active
-                        else if (process->getState() != ProcessState::FINISHED) {
-                            OSThread::sleep(100);
-                            auto screen = std::make_shared<BaseScreen>(process, args[1]);
-                            ConsoleManager::getInstance()->registerScreen(screen);
-                            ConsoleManager::getInstance()->switchToScreen(screen->getName());
-                        }
-                        else {
-                            std::cout << "Process " << args[1] << " has finished execution.\n";
-                        }
+                        OSThread::sleep(100);
+                        auto screen = std::make_shared<BaseScreen>(process, args[1]);
+                        ConsoleManager::getInstance()->registerScreen(screen);
+                        ConsoleManager::getInstance()->switchToScreen(screen->getName());
                     }
                     else {
                         std::cout << "Process " << args[1] << " not found.\n";
                     }
                 }
             }
-            else{
+            else {
                 std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
             }
         }
         else if (args[0] == "-c") {
-            // since instructions are quoted and semicolon-separated 
             size_t firstQuote = input.find('"');
             size_t lastQuote = input.rfind('"');
 
@@ -215,97 +199,60 @@ void MainConsole::handleCommand(const std::string& input) {
                 std::cout << "Please enter the process name.\n";
                 return;
             }
+
             
-            // Missing or malformed memory size
+            /*
             if (args[2] == "" || !isNumericString(args[2])) {
                 std::cout << "invalid memory allocation\n";
                 return;
             }
-            
-            // Missing quotes / malformed instruction string
-            if (firstQuote == std::string::npos || lastQuote == std::string::npos || lastQuote <= firstQuote)
-            {
-                std::cout << "invalid command\n";
-                return;
-            }
 
-            if (args[1] == "" || args[2] == "" ||
-                firstQuote == std::string::npos || lastQuote == std::string::npos ||
-                lastQuote <= firstQuote) {
-                std::cout << "invalid command\n";
-                return;
+            unsigned long long memSize;
+            try {
+                memSize = std::stoull(args[2]);
             }
-            else if (!isNumericString(args[2])) {
+            catch (...) {
                 std::cout << "invalid memory allocation\n";
                 return;
             }
+
+            if (!isValidMemorySize(memSize)) {
+                std::cout << "invalid memory allocation\n";
+                return;
+            }*/
+
+            if (firstQuote == std::string::npos || lastQuote == std::string::npos || lastQuote <= firstQuote) {
+                std::cout << "invalid command\n";
+                return;
+            }
+
+            std::string instructionBlob = input.substr(firstQuote + 1, lastQuote - firstQuote - 1);
+            std::vector<std::string> instructions = splitInstructions(instructionBlob);
+
+            if (instructions.empty() || instructions.size() > 50) {
+                std::cout << "invalid command\n";
+                return;
+            }
+            else if (GlobalScheduler::getInstance() == nullptr) {
+                std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
+                return;
+            }
             else {
-                unsigned long long memSize;
-                try {
-                    memSize = std::stoull(args[2]); 
-                } catch (...) {
-                    std::cout << "invalid memory allocation\n";
-                    return;
-                }
-                if (!isValidMemorySize(memSize)) {
-                    std::cout << "invalid memory allocation\n";
+                auto* g = GlobalScheduler::getInstance();
+                auto process = g->findProcess(args[1]);
+                if (process != nullptr) {
+                    std::cout << "Process " << args[1] << " already exists.\n";
                     return;
                 }
                 else {
-                    std::string instructionBlob = input.substr(firstQuote + 1, lastQuote - firstQuote - 1);
-                    std::vector<std::string> instructions = splitInstructions(instructionBlob);
+                    process = g->createUniqueProcess(args[1], false);
+                    process->loadUserDefinedInstructions(instructions);
 
-                    // sends a string of 1 – 50 instructions to be executed by the specified process. 
-                    // Throws “invalid command” if the instruction size is not met.
-                   if (instructions.empty() || instructions.size() > 50)
-                   {
-                    std::cout << "invalid command\n";
-                    return;
-                }
-
-                    else if (GlobalScheduler::getInstance() == nullptr) {
-                        std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
-                        return;
-                    }
-                    else {
-                        auto process = GlobalScheduler::getInstance()->findProcess(args[1]);
-                        if (process != nullptr) {
-                            std::cout << "Process " << args[1] << " already exists.\n";
-                            return;
-                        }
-                        else {
-                            // NOTE for Member 3: same memory-size-aware creation entry point as "screen -s" above
-                            //process = GlobalScheduler::getInstance()->createUniqueProcess(args[1], memSize);
-
-                            // NOTE for Member 2: Process needs a method (e.g.
-                            // loadUserDefinedInstructions(const std::vector<std::string>&))
-                            // that turns each validated instruction string
-                            // here into the matching ICommand
-                            // (PrintCommand/DeclareCommand/MathCommand/
-                            // SleepCommand/ForCommand/ReadCommand/
-                            // WriteCommand) and appends it via addCommand(),
-                            // instead of the random generateCommandBlock()
-                            // path used by Process::initializeCommands().
-                            // `instructions` already holds the validated,
-                            // semicolon-split, trimmed instruction list.
-                            // process->loadUserDefinedInstructions(instructions);
-
-                            // Create process with user-defined memory size
-                            process = GlobalScheduler::getInstance()->createUniqueProcess(args[1], memSize, false);
-
-                            // Load user instructions into process
-                            process->loadUserDefinedInstructions(instructions);
-
-                            auto screen = std::make_shared<BaseScreen>(process, args[1]);
-                            ConsoleManager::getInstance()->registerScreen(screen);
-                            ConsoleManager::getInstance()->switchToScreen(screen->getName());
-                        }
-                    }
+                    auto screen = std::make_shared<BaseScreen>(process, args[1]);
+                    ConsoleManager::getInstance()->registerScreen(screen);
+                    ConsoleManager::getInstance()->switchToScreen(screen->getName());
                 }
             }
-        }
-        else {
-            std::cout << "Invalid arguments for " << command << " command.\n";
         }
     }
     else if (command == "scheduler-start") {
@@ -340,21 +287,33 @@ void MainConsole::handleCommand(const std::string& input) {
         }
     }
     else if (command == "report-util") {
-        if (GlobalScheduler::getInstance() != nullptr) 
+        if (GlobalScheduler::getInstance() != nullptr)
         {
             GlobalScheduler::getInstance()->generateReport();
-            
+
             std::cout << "Report generated at C:/csopesy-log.txt!\n";
-        } 
-        else 
+        }
+        else
         {
             std::cout << "Scheduler is not initialized. Please run 'initialize' first.\n";
         }
     }
     else if (command == "process-smi") {
-        displayProcessSMI();
+        if (GlobalScheduler::getInstance() == nullptr) {
+            std::cout << "Config not initialized yet.\n";
+        }
+        else {
+            GlobalScheduler::getInstance()->displayProcessSMI();
+        }
     }
     else if (command == "vmstat") {
+        if (GlobalScheduler::getInstance() == nullptr) {
+            std::cout << "Config not initialized yet.\n";
+        }
+        else {
+            GlobalScheduler::getInstance()->displayVMStat();
+        }
+
 
     }
     else std::cout << "Unknown command: " << input << std::endl;
@@ -395,25 +354,28 @@ void printHeader()
     std::cout << "*==================================================*";
 }
 std::pair<int, int> getActiveAndTotalCores() {
-    std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
-    auto workers = GlobalScheduler::getInstance()->getWorkers();
-    int activeCores = 0;
-    int totalCores = workers.size();
+    std::vector<std::shared_ptr<CPUWorker>> workersCopy;
 
-    for (const auto& worker : workers)
     {
-        if (!worker->isFree())
-        {
+        std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
+        workersCopy = GlobalScheduler::getInstance()->getWorkers();
+    } 
+
+    int totalCores = static_cast<int>(workersCopy.size());
+    int activeCores = 0;
+    for (const auto& worker : workersCopy) {
+        if (!worker->isFree()) { 
             activeCores++;
         }
     }
-    lock.unlock();
+
     return { activeCores, totalCores };
 }
+
 void MainConsole::displayScreenLS() const
 {
     auto [activeCores, totalCores] = getActiveAndTotalCores();
-    std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
+    //::shared_lock lock(GlobalScheduler::getInstance()->mutex);
     int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
 
     std::cout << "CPU Utilization: " << cpuUtil << "%\n";
@@ -451,35 +413,8 @@ void MainConsole::displayScreenLS() const
         }
     }
     else std::cout << "No finished processes\n";
-    lock.unlock();
+    //lock.unlock();
     std::cout << "--------------------------------------------------\n";
-}
-
-void MainConsole::displayProcessSMI() const {
-    auto [activeCores, totalCores] = getActiveAndTotalCores();
-    std::shared_lock lock(GlobalScheduler::getInstance()->mutex);
-
-    int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
-    std::string usedMemory = GlobalScheduler::getInstance()->getMemoryUse();
-    std::cout << "\n--------------------------------------------------\n";
-    std::cout << "\PROCESS-SMI\n";
-    std::cout << "--------------------------------------------------\n";
-    std::cout << "CPU Utilization: " << cpuUtil << "%\n";
-    std::cout << usedMemory << "\n";
-    std::cout << "--------------------------------------------------\n";
-    std::cout << "Running Processes and Memory Usage\n";
-    std::cout << "--------------------------------------------------\n";
-    std::deque<std::shared_ptr<Process>> runningProcesses = GlobalScheduler::getInstance()->getRunningProcesses();
-    if (!runningProcesses.empty()) {
-        for (const auto& p : runningProcesses) {
-            std::cout << p->getName() << " " << p->getMemoryRequired() << "\n";
-        }
-    }
-    else {
-        std::cout << "No running processes\n";
-    }
-    std::cout << "--------------------------------------------------\n";
-
 }
 
 void GlobalScheduler::generateMemLog(int cpuCycles) {

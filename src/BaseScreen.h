@@ -14,7 +14,7 @@ public:
 	void display() override;
 
 private:
-	void printProcessInfo() const;
+	void printProcessInfo(bool displayHeader) const;
 	std::shared_ptr<Process> attachedProcess;
 	bool refreshed = false;
 	//prints the current instruction of attached process

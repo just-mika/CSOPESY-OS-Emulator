@@ -18,22 +18,22 @@ AScheduler::AScheduler(Config config)
     minMemPerProc(config.minMemPerProc),
     maxMemPerProc(config.maxMemPerProc)
 { }
-void AScheduler::checkMemoryBlockedQueue() {
+void AScheduler::admitFromMemoryQueue() {
     std::unique_lock lock(mutex);
     auto it = memoryQueue.begin();
     while (it != memoryQueue.end()) {
         auto process = *it;
         size_t sizeR = process->getMemoryRequired();
         void* ptr = memoryAllocator->allocate(sizeR, process->getPID());
+
         if (ptr != nullptr) {
             process->setMemoryAddress(ptr);
             process->setState(ProcessState::READY);
             readyQueue.push_back(process);
-            processTable[process->getPID()] = process;
             it = memoryQueue.erase(it);
         }
         else {
-            break;
+            ++it;
         }
     }
 }
@@ -44,8 +44,9 @@ void AScheduler::addProcess(std::shared_ptr<Process> process) {
     std::unique_lock lock(mutex);
     process->setState(ProcessState::WAITING);
     memoryQueue.push_back(process);
+    processTable[process->getPID()] = process;
     lock.unlock();
-    checkMemoryBlockedQueue();
+    admitFromMemoryQueue();
 }
 
 std::shared_ptr<Process> AScheduler::findProcess(const std::string& processName) {
@@ -107,15 +108,16 @@ std::deque<std::shared_ptr<Process>> AScheduler::getRunningProcesses()
     std::shared_lock lock(mutex);
     return runningProcesses;
 }
-std::string AScheduler::getMemoryUse() {
-    std::shared_lock lock(mutex);
-    int totalMemory = 0;
-    for (const auto& p : runningProcesses) {
-        totalMemory = p->getMemoryRequired();
-    }
-    int percent = (totalMemory * 100) / maxOverallMem;
-    std::string memoryUsage = "Memory Usage: " + std::to_string(totalMemory) + "MiB / " + std::to_string(maxOverallMem) + "MiB\n";
-    memoryUsage += "Memory Util: " + std::to_string(percent) + "%";
 
-    return memoryUsage;
+unsigned long long AScheduler::getMinMemPerProc()
+{
+    return this->minMemPerProc;
+}
+
+size_t AScheduler::rollMemSize() {
+    size_t rolledMem = minMemPerProc;
+    if (maxMemPerProc > minMemPerProc) {
+        rolledMem = minMemPerProc + (rand() % (maxMemPerProc - minMemPerProc + 1));
+    }
+    return rolledMem;
 }

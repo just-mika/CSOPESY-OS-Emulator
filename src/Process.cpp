@@ -15,6 +15,8 @@
 
 #include "PagedMemoryAllocator.h"
 
+static std::pair<std::string, std::string> parsePrintArgs(const std::string& line);
+
 Process::Process(int pid, std::string name, size_t memoryRequired)
 {
 	this->pID = pid;
@@ -28,21 +30,33 @@ Process::Process(int pid, std::string name, size_t memoryRequired)
 }
 
 // Helper function to generate a block of commands for a FOR loop, with depth control to prevent infinite nesting
-static std::vector<std::shared_ptr<ICommand>> generateCommandBlock(int pID, std::string procName, int numCmds, int currentDepth)
+static std::vector<std::shared_ptr<ICommand>> generateCommandBlock(int pID, std::string procName, int numCmds, int currentDepth, size_t memoryRequired)
 {
 	std::vector<std::shared_ptr<ICommand>> block;
 
 	for (int i = 0; i < numCmds; ++i) {
 
-		// If depth is 3 or more, restrict to cases 0-4 (No FOR loops). Otherwise, cases 0-5.
-		int maxCommandType = (currentDepth >= 3) ? 5 : 6;
-		int commandType = rand() % maxCommandType;
+		int commandType;
+		if (currentDepth >= 3) {
+			int pick = rand() % 7;
+			commandType = (pick == 5) ? 6 : pick;
+			if (pick == 6) commandType = 7;
+		}
+		else {
+			commandType = rand() % 8;
+		}
 
 		std::shared_ptr<ICommand> generatedCmd = nullptr;
 
 		std::string randomVar1 = "v" + std::to_string(rand() % 5);
 		std::string randomVar2 = "v" + std::to_string(rand() % 5);
 		uint16_t randomVal = static_cast<uint16_t>(rand() % 65536);
+
+		uint32_t randomAddr = 0;
+		if (memoryRequired >= 2) {
+			uint32_t maxEven = static_cast<uint32_t>((memoryRequired - 2) / 2);
+			randomAddr = static_cast<uint32_t>((rand() % (maxEven + 1)) * 2);
+		}
 
 		switch (commandType) {
 		case 0:
@@ -61,15 +75,18 @@ static std::vector<std::shared_ptr<ICommand>> generateCommandBlock(int pID, std:
 			generatedCmd = std::make_shared<SleepCommand>(pID, static_cast<uint8_t>((rand() % 5) + 1));
 			break;
 		case 5: {
-			// FOR LOOP
 			int innerCmdsAmount = (rand() % 3) + 1;
 			int repeats = (rand() % 4) + 2;
-
-			// Call the helper recursively to generate the inner block of commands, increasing the depth by 1	
-			auto innerBlock = generateCommandBlock(pID, procName, innerCmdsAmount, currentDepth + 1);
+			auto innerBlock = generateCommandBlock(pID, procName, innerCmdsAmount, currentDepth + 1, memoryRequired);
 			generatedCmd = std::make_shared<ForCommand>(pID, innerBlock, repeats);
 			break;
 		}
+		case 6:
+			generatedCmd = std::make_shared<WriteCommand>(pID, randomAddr, randomVal);
+			break;
+		case 7:
+			generatedCmd = std::make_shared<ReadCommand>(pID, randomVar1, randomAddr);
+			break;
 		}
 
 		if (generatedCmd != nullptr) {
@@ -120,7 +137,7 @@ void Process::initializeCommands(int limit)
 	//FileLogger::initializeProcessFile(this->name);
 
 	// Call helper function to create a list of commands
-	std::vector<std::shared_ptr<ICommand>> initialCommands = generateCommandBlock(this->pID, this->name, limit, 1); // Add 1 for command loop depth
+	std::vector<std::shared_ptr<ICommand>> initialCommands = generateCommandBlock(this->pID, this->name, limit, 1, this->memoryRequired); // Add 1 for command loop depth
 		//demoCase(this->pID, this->name, limit, 1);
 		//
 
@@ -188,10 +205,64 @@ void Process::loadUserDefinedInstructions(const std::vector<std::string>& instru
 		}
 		else if (op.rfind("PRINT", 0) == 0)
 		{
-			// Simple or formatted PRINT instruction
-			addCommand(std::make_shared<PrintCommand>(pID));
+			auto [toPrint, varName] = parsePrintArgs(line);
+			addCommand(std::make_shared<PrintCommand>(pID, toPrint, varName));
 		}
 	}
+}
+
+// Parses PRINT("literal" + varName) or PRINT("literal") or PRINT(varName)
+// Returns {toPrint, varName} — either may be empty depending on what's present.
+static std::pair<std::string, std::string> parsePrintArgs(const std::string& line)
+{
+	std::string toPrint;
+	std::string varName;
+
+	size_t printPos = line.find("PRINT");
+	if (printPos == std::string::npos) return { toPrint, varName };
+
+	std::string rest = line.substr(printPos + 5);
+
+	size_t openParen = rest.find('(');
+	size_t closeParen = rest.rfind(')');
+	if (openParen == std::string::npos || closeParen == std::string::npos || closeParen <= openParen) {
+		return { toPrint, varName };
+	}
+
+	std::string inner = rest.substr(openParen + 1, closeParen - openParen - 1);
+
+	// Strip literal backslashes (from escaped quotes like \") before searching
+	std::string cleaned;
+	for (char c : inner) {
+		if (c != '\\') cleaned += c;
+	}
+	inner = cleaned;
+
+	size_t firstQuote = inner.find('"');
+	size_t secondQuote = inner.find('"', firstQuote + 1);
+
+	if (firstQuote != std::string::npos && secondQuote != std::string::npos) {
+		toPrint = inner.substr(firstQuote + 1, secondQuote - firstQuote - 1);
+
+		size_t plusPos = inner.find('+', secondQuote);
+		if (plusPos != std::string::npos) {
+			std::string varPart = inner.substr(plusPos + 1);
+			size_t start = varPart.find_first_not_of(" \t");
+			size_t end = varPart.find_last_not_of(" \t");
+			if (start != std::string::npos) {
+				varName = varPart.substr(start, end - start + 1);
+			}
+		}
+	}
+	else {
+		size_t start = inner.find_first_not_of(" \t");
+		size_t end = inner.find_last_not_of(" \t");
+		if (start != std::string::npos) {
+			varName = inner.substr(start, end - start + 1);
+		}
+	}
+
+	return { toPrint, varName };
 }
 
 std::string static formatTime(time_t timeToFormat) {
@@ -347,6 +418,11 @@ bool Process::isValidAddress(uint32_t addr) const {
 	return (addr < memoryRequired) && (memoryRequired - addr >= 2);
 }
 
+uint32_t Process::mapAddress(uint32_t addr) const {
+	if (memoryRequired == 0) return 0;
+	return addr % static_cast<uint32_t>(memoryRequired);
+}
+
 void Process::triggerAccessViolation(uint32_t addr) {
 	this->accessViolation = true;
 	this->invalidAddress = addr;
@@ -376,77 +452,25 @@ std::string Process::getAccessViolationMessage() const {
 }
 
 uint16_t Process::readMemory(uint32_t addr) {
-	//std::cout << "readMemory called, addr=" << addr << "\n";
-	if (!isValidAddress(addr)) {
-		triggerAccessViolation(addr);
+	uint32_t mapped = mapAddress(addr);
+	if (!isValidAddress(mapped)) {
+		triggerAccessViolation(addr);   // report the original address in the violation, not the mapped one
 		return 0;
 	}
-
 	auto* allocator = PagedMemoryAllocator::getInstance();
-	size_t frameSize = allocator->getFrameSize();
 	auto* pageTable = static_cast<PageTable*>(memoryAddress);
-
-	size_t pageIndex = addr / frameSize;
-	size_t offset = addr % frameSize;
-
-	allocator->ensurePageResident(pageTable, pageIndex);
-
-	PageEntry& entry = pageTable->entries[pageIndex];
-	uint8_t* frame = allocator->getFramePointer(entry.frameNumber);
-
-	// Handle the (rare) case where addr+1 crosses into the next page
-	uint16_t value;
-	if (offset + 1 < frameSize) {
-		value = static_cast<uint16_t>(frame[offset]) |
-			(static_cast<uint16_t>(frame[offset + 1]) << 8);
-	}
-	else {
-		size_t nextPageIndex = pageIndex + 1;
-		allocator->ensurePageResident(pageTable, nextPageIndex);
-		PageEntry& nextEntry = pageTable->entries[nextPageIndex];
-		uint8_t* nextFrame = allocator->getFramePointer(nextEntry.frameNumber);
-		value = static_cast<uint16_t>(frame[offset]) |
-			(static_cast<uint16_t>(nextFrame[0]) << 8);
-	}
-
-	return value;
+	return allocator->readWord(pageTable, mapped);
 }
 
 void Process::writeMemory(uint32_t addr, uint16_t value) {
-	//std::cout << "writeMemory called, addr=" << addr << "\n";
-	if (!isValidAddress(addr)) {
+	uint32_t mapped = mapAddress(addr);
+	if (!isValidAddress(mapped)) {
 		triggerAccessViolation(addr);
 		return;
 	}
-
 	auto* allocator = PagedMemoryAllocator::getInstance();
-	size_t frameSize = allocator->getFrameSize();
 	auto* pageTable = static_cast<PageTable*>(memoryAddress);
-
-	size_t pageIndex = addr / frameSize;
-	size_t offset = addr % frameSize;
-
-	allocator->ensurePageResident(pageTable, pageIndex);
-
-	PageEntry& entry = pageTable->entries[pageIndex];
-	uint8_t* frame = allocator->getFramePointer(entry.frameNumber);
-
-	if (offset + 1 < frameSize) {
-		frame[offset] = static_cast<uint8_t>(value & 0xFF);
-		frame[offset + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);
-		entry.isDirty = true;
-	}
-	else {
-		size_t nextPageIndex = pageIndex + 1;
-		allocator->ensurePageResident(pageTable, nextPageIndex);
-		PageEntry& nextEntry = pageTable->entries[nextPageIndex];
-		uint8_t* nextFrame = allocator->getFramePointer(nextEntry.frameNumber);
-
-		frame[offset] = static_cast<uint8_t>(value & 0xFF);
-		nextFrame[0] = static_cast<uint8_t>((value >> 8) & 0xFF);
-		entry.isDirty = true;
-		nextEntry.isDirty = true;
-	}
+	allocator->writeWord(pageTable, mapped, value);
 }
 
 size_t Process::getMemoryRequired() const {

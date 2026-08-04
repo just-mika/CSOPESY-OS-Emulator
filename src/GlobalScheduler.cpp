@@ -30,23 +30,23 @@ void GlobalScheduler::run()
 	{
 		if (generateProcesses) {
 			tick();
+		}
 
-			updateWorkers();
-			updateSleepingProcesses();
-			checkMemoryBlockedQueue();
+		updateWorkers();
+		updateSleepingProcesses();
+		admitFromMemoryQueue();
 
-			if (algo == SchedulingAlgorithm::FCFS) {
-				runFCFS();
-			}
-			else if (algo == SchedulingAlgorithm::RR) {
-				runRR();
-			}
+		if (algo == SchedulingAlgorithm::FCFS) {
+			runFCFS();
+		}
+		else if (algo == SchedulingAlgorithm::RR) {
+			runRR();
+		}
 
-			cpuCycles++;
+		cpuCycles++;
 
-			if (cpuCycles > 0 && cpuCycles % quantumCycles == 0) {
-				//generateMemLog(cpuCycles);
-			}
+		if (cpuCycles > 0 && cpuCycles % quantumCycles == 0) {
+			//generateMemLog(cpuCycles);
 		}
 
 		this->sleep(100);
@@ -124,9 +124,10 @@ void GlobalScheduler::updateWorkers()
 {
 	for (auto& worker : workers) {
 		if (worker->isFree()) {
+			idleCpuTicks++;
 			continue; // Safely skip free workers
 		}
-
+		activeCpuTicks++;
 		auto currentProc = worker->getCurrentProcess();
 
 		if (currentProc->isFinished()) {
@@ -145,7 +146,7 @@ void GlobalScheduler::updateWorkers()
 			lock.unlock();
 			worker->assignProcess(nullptr); // Free the worker
 
-			checkMemoryBlockedQueue();
+			admitFromMemoryQueue();
 		}
 		// handle WAITING state (triggered by SLEEP(X)); do not include unallocated processes
 		else if (currentProc->getState() == ProcessState::WAITING && currentProc->getMemoryAddress() != nullptr) {
@@ -189,7 +190,7 @@ void GlobalScheduler::updateSleepingProcesses()
 		}
 	}
 	lock.unlock();
-	checkMemoryBlockedQueue();
+	admitFromMemoryQueue();
 }
 
 GlobalScheduler* GlobalScheduler::getInstance()
@@ -198,14 +199,13 @@ GlobalScheduler* GlobalScheduler::getInstance()
 }
 
 void GlobalScheduler::init(Config config) {
-	std::string fileName = "csopesy-backing-store.txt";
 	if (!sharedInstance) {
 		sharedInstance = new GlobalScheduler(config);
 	}
 	
 	// Initialize Memory Allocator First
-	PagedMemoryAllocator::init(config.maxOverallMem, config.memPerFrame, fileName);
-	sharedInstance->memoryAllocator = std::shared_ptr<IMemoryAllocator>(PagedMemoryAllocator::getInstance(), [](IMemoryAllocator*) {});
+	PagedMemoryAllocator::init(config.maxOverallMem, config.memPerFrame, "csopesy-backing-store.txt");
+	sharedInstance->memoryAllocator = std::shared_ptr<PagedMemoryAllocator>(PagedMemoryAllocator::getInstance(), [](IMemoryAllocator*) {});
 
 	// Start the Workers
 	sharedInstance->startWorkers();
@@ -254,8 +254,12 @@ std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name, 
 
 std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name)
 {
-	// Default 1-argument overload using min memory requirement for process creation
-	return createUniqueProcess(name, AScheduler::minMemPerProc, true);
+	return createUniqueProcess(name, AScheduler::rollMemSize(), true);
+}
+
+std::shared_ptr<Process> GlobalScheduler::createUniqueProcess(std::string name, bool generateRandomCommands)
+{
+	return createUniqueProcess(name, AScheduler::rollMemSize(), generateRandomCommands);
 }
 
 std::vector<std::shared_ptr<CPUWorker>> GlobalScheduler::getWorkers()
@@ -287,7 +291,7 @@ std::shared_ptr<Process> GlobalScheduler::generateProcess()
 
 	size_t rolledMem = AScheduler::minMemPerProc;
 	if (AScheduler::maxMemPerProc > AScheduler::minMemPerProc) {
-		rolledMem = AScheduler::minMemPerProc + (rand() % (AScheduler::maxMemPerProc - AScheduler::minMemPerProc + 1));
+		rolledMem = rollMemSize();
 	}
 
 	std::shared_ptr<Process> newProcess = std::make_shared<Process>(nextPID, processName, rolledMem);
@@ -310,8 +314,13 @@ void GlobalScheduler::printConfig() {
 	std::cout << "min-ins: " << minIns << std::endl;
 	std::cout << "max-ins: " << maxIns << std::endl;
 	std::cout << "delay-per-exec: " << delaysPerExec << std::endl;
+	std::cout << "max-overall-mem: " << maxOverallMem << std::endl;
+	std::cout << "mem-per-frame: " << memPerFrame << std::endl;
+	std::cout << "min-mem-per-proc: " << minMemPerProc << std::endl;
+	std::cout << "max-mem-per-proc: " << maxMemPerProc << std::endl;
 	std::cout << "++++++++++++++++++++++++++++++++\n";
 }
+
 void GlobalScheduler::generateReport() 
 {
     std::ofstream outFile("csopesy-log.txt");
@@ -392,7 +401,96 @@ static std::string formatSnapshotTime(std::time_t t) {
 	ss << std::put_time(&tm_struct, "%m/%d/%Y %I:%M:%S%p");
 	return ss.str();
 }
+void GlobalScheduler::displayVMStat()
+{
+	if (memoryAllocator == nullptr) return;
+	size_t totalMem = maxOverallMem;
+	size_t usedMem = memoryAllocator->getUsedMemory();
+	size_t freeMem = memoryAllocator->getFreeMemory();
 
+	uint64_t activeTicks = activeCpuTicks;
+	uint64_t idleTicks = idleCpuTicks;
+	uint64_t totalTicks = activeTicks + idleTicks;
+
+	size_t pagedIn = memoryAllocator->getNumPagedIn();
+	size_t pagedOut = memoryAllocator->getNumPagedOut();
+
+	std::cout << "\n--------------------------------------------------\n";
+	std::cout << "Virtual Memory Stats\n";
+	std::cout << "--------------------------------------------------\n";
+	std::cout << std::left << std::setw(24) << "Total memory:" << totalMem << " bytes\n";
+	std::cout << std::left << std::setw(24) << "Used memory:" << usedMem << " bytes\n";
+	std::cout << std::left << std::setw(24) << "Free memory:" << freeMem << " bytes\n";
+	std::cout << "--------------------------------------------------\n";
+	std::cout << std::left << std::setw(24) << "Idle CPU ticks:" << idleTicks << "\n";
+	std::cout << std::left << std::setw(24) << "Active CPU ticks:" << activeTicks << "\n";
+	std::cout << std::left << std::setw(24) << "Total CPU ticks:" << totalTicks << "\n";
+	std::cout << "--------------------------------------------------\n";
+	std::cout << std::left << std::setw(24) << "Num paged in:" << pagedIn << "\n";
+	std::cout << std::left << std::setw(24) << "Num paged out:" << pagedOut << "\n";
+	std::cout << "--------------------------------------------------\n";
+}
+
+void GlobalScheduler::displayProcessSMI() {
+	// --- Step 1: snapshot worker pointers and process lists ---
+	std::vector<std::shared_ptr<CPUWorker>> workersCopy;
+	std::vector<std::shared_ptr<Process>> allProcs;
+
+	{
+		std::shared_lock lock(mutex);
+		workersCopy = workers;   // copy the shared_ptrs, not the CPUWorker objects themselves
+		allProcs.reserve(runningProcesses.size() + readyQueue.size());
+		for (const auto& p : runningProcesses) allProcs.push_back(p);
+		for (const auto& p : readyQueue) allProcs.push_back(p);
+	} // <-- AScheduler::mutex released here, BEFORE touching any worker
+
+	// --- Step 2: check worker state 
+	int totalCores = static_cast<int>(workersCopy.size());
+	int activeCores = 0;
+	for (const auto& w : workersCopy) {
+		if (!w->isFree()) activeCores++;
+	}
+	int cpuUtil = (totalCores > 0) ? (activeCores * 100) / totalCores : 0;
+
+	// --- Step 3: resident memory per process ---
+	size_t used = 0;
+	std::vector<std::pair<std::string, size_t>> procMemUsage;
+	procMemUsage.reserve(allProcs.size());
+
+	for (const auto& p : allProcs) {
+		auto* pt = static_cast<PageTable*>(p->getMemoryAddress());
+		if (!pt) continue;
+		size_t resident = memoryAllocator->getResidentMemory(pt);
+		used += resident;
+		procMemUsage.emplace_back(p->getName(), resident);
+	}
+
+	size_t total = maxOverallMem;
+	int memUtil = (total > 0) ? static_cast<int>((used * 100) / total) : 0;
+
+	// --- Step 4: print ---
+	std::cout << "\n--------------------------------------------------\n";
+	std::cout << "PROCESS-SMI\n";
+	std::cout << "--------------------------------------------------\n";
+	std::cout << "CPU Utilization: " << cpuUtil << "%\n";
+	std::cout << "Memory Usage: " << used << " B / " << total << " B\n";
+	std::cout << "Memory Util: " << memUtil << "%\n";
+	std::cout << "--------------------------------------------------\n";
+	std::cout << "Running Processes and Memory Usage\n";
+	std::cout << "--------------------------------------------------\n";
+
+	if (procMemUsage.empty()) {
+		std::cout << "No running processes\n";
+	}
+	else {
+		for (const auto& [name, resident] : procMemUsage) {
+			std::cout << name << " " << resident << "\n";
+		}
+	}
+
+	std::cout << "--------------------------------------------------\n";
+}
+/*
 void GlobalScheduler::generateMemLog(int cpuCycles) {
 	std::string DIRECTORY_PATH = "output/mem_snapshots/";
 
@@ -425,4 +523,5 @@ void GlobalScheduler::generateMemLog(int cpuCycles) {
 	else {
 		std::cerr << "[Memory Logger] Unable to initialize file at: " << fullFilePath << std::endl;
 	}
-}
+
+}*/

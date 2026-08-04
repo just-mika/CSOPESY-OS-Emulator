@@ -40,6 +40,7 @@ class Process
 		int cyclesInCPU = 0;
 		std::shared_ptr<std::vector<std::string>> printLogs; 
 		void saveLog(std::string printedString);
+		uint32_t mapAddress(uint32_t addr) const;
 		std::stack<LoopFrame> loopStack;
 
 		// Memory management
@@ -91,6 +92,7 @@ class Process
 		void loadUserDefinedInstructions(const std::vector<std::string>& instructions);
 		uint16_t readMemory(uint32_t addr);					// Read a 16-bit value from the process's virtual memory at the specified address
 		void writeMemory(uint32_t addr, uint16_t value);	// Write a 16-bit value to the process's virtual memory at the specified address
+
 };
 
 
