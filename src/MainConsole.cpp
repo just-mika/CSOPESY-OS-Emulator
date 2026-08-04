@@ -175,6 +175,7 @@ void MainConsole::handleCommand(const std::string& input) {
                     if (process != nullptr) {
                         if (process->hasAccessViolation()) {
                             std::cout << process->getAccessViolationMessage() << "\n";
+							return;
                         }
                         OSThread::sleep(100);
                         auto screen = std::make_shared<BaseScreen>(process, args[1]);
